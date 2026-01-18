@@ -1,5 +1,5 @@
-<!-- Professional Branded Header -->
-<h1 style="text-align: center;"><img src="Dojo-Logo-Red-Dot.svg" alt="Dojo Logo" style="max-width: 100%; height: auto;"></h1>
+# Dojo
 
-<!-- Original README content -->
+![Dojo Logo](Dojo-Logo-Red-Dot.svg)
 
+Welcome to the Dojo project! This is a brief introduction to what the project is about and how to get started.
