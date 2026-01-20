@@ -4,7 +4,7 @@
   # Dojo
   
   <!-- Add your project tagline/description here -->
-  **A brief, compelling description of your project**
+  **A place to practice your CP skills alone or with your squard**
   
   [![GitHub stars](https://img.shields.io/github/stars/richochetclementine1315/Dojo?style=social)](https://github.com/richochetclementine1315/Dojo/stargazers)
   [![GitHub forks](https://img.shields.io/github/forks/richochetclementine1315/Dojo?style=social)](https://github.com/richochetclementine1315/Dojo/network/members)
