@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/a6d002d6-c132-4c2c-99d3-5ab05f197116" alt="Dojo Logo" width="600"/>
+  <img src="https://github.com/user-attachments/assets/a6d002d6-c132-4c2c-99d3-5ab05f197116" alt="Dojo Logo" width="400"/>
   
   # Dojo
   
