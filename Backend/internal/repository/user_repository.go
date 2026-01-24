@@ -24,21 +24,21 @@ func (r *UserRepository) Create(user *models.User) error {
 // FindByID retrieves a user by ID
 func (r *UserRepository) FindByID(id uuid.UUID) (*models.User, error) {
 	var user models.User
-	err := r.db.Preload("profile").First(&user, "id=?", id).Error
+	err := r.db.Preload("Profile").First(&user, "id=?", id).Error
 	return &user, err
 }
 
 // FindByEmail retrieves a user by email
 func (r *UserRepository) FindByEmail(email string) (*models.User, error) {
 	var user models.User
-	err := r.db.Preload("profile").First(&user, "email=?", email).Error
+	err := r.db.Preload("Profile").First(&user, "email=?", email).Error
 	return &user, err
 }
 
 // FindByUsername retrieves a user by username
 func (r *UserRepository) FindByUsername(username string) (*models.User, error) {
 	var user models.User
-	err := r.db.Preload("profile").First(&user, "username=?", username).Error
+	err := r.db.Preload("Profile").First(&user, "username=?", username).Error
 	return &user, err
 }
 

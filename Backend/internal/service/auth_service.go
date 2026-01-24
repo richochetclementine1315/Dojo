@@ -83,8 +83,9 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.TokenResponse, er
 
 	// Create auth account
 	authAccount := &models.AuthAccount{
-		UserID:   user.ID,
-		Provider: "email",
+		UserID:         user.ID,
+		Provider:       "email",
+		ProviderUserID: user.Email,
 	}
 
 	if err := s.authRepo.CreateAuthAccount(authAccount); err != nil {

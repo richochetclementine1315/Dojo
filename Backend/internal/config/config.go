@@ -86,10 +86,24 @@ type RateLimitConfig struct {
 
 // LoadConfig function would typically load configurations from environment variables or config files.
 func LoadConfig() (*Config, error) {
-	// Implementation to load .env goes here.
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("No .env files found, using environment variables")
+	// Try to load .env file from multiple possible locations
+	possiblePaths := []string{
+		".env",       // Current directory
+		"../.env",    // One level up
+		"../../.env", // Two levels up (from cmd/api)
+	}
+
+	loaded := false
+	for _, path := range possiblePaths {
+		if err := godotenv.Load(path); err == nil {
+			loaded = true
+			log.Printf("✅ Loaded .env from: %s", path)
+			break
+		}
+	}
+
+	if !loaded {
+		log.Println("⚠️  No .env file found, using environment variables")
 	}
 	//
 	accessExpiry, err := time.ParseDuration(getEnv("JWT_ACCESS_EXPIRY", "15m"))
