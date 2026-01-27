@@ -2,6 +2,7 @@ package repository
 
 import (
 	"dojo/internal/models"
+	"errors"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -22,9 +23,14 @@ func (r *UserRepository) Create(user *models.User) error {
 }
 
 // FindByID retrieves a user by ID
-func (r *UserRepository) FindByID(id uuid.UUID) (*models.User, error) {
+
+func (r *UserRepository) FindByID(id string) (*models.User, error) {
+	userID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
 	var user models.User
-	err := r.db.Preload("Profile").First(&user, "id=?", id).Error
+	err = r.db.Preload("Profile").First(&user, "id=?", userID).Error
 	return &user, err
 }
 
@@ -71,4 +77,40 @@ func (r *UserRepository) GetProfile(userID uuid.UUID) (*models.UserProfile, erro
 	var profile models.UserProfile
 	err := r.db.Preload("PlatformStats").First(&profile, "user_id=?", userID).Error
 	return &profile, err
+}
+
+// Add these methods to user_repository.go after GetProfile:
+
+// LoadProfile loads the user's profile relationship
+func (r *UserRepository) LoadProfile(user *models.User) error {
+	return r.db.Preload("Profile").First(user, "id = ?", user.ID).Error
+}
+
+// LoadPlatformStats loads the user's platform stats relationship
+func (r *UserRepository) LoadPlatformStats(user *models.User) error {
+	return r.db.Preload("PlatformStats").First(user, "id = ?", user.ID).Error
+}
+
+// UpdateProfile updates an existing user profile
+func (r *UserRepository) UpdateProfile(profile *models.UserProfile) error {
+	return r.db.Save(profile).Error
+}
+
+// UpsertPlatformStat creates or updates a platform stat
+func (r *UserRepository) UpsertPlatformStat(stat *models.UserPlatformStat) error {
+	// Check if stat exists for this user and platform
+	var existing models.UserPlatformStat
+	err := r.db.Where("user_id = ? AND platform = ?", stat.UserID, stat.Platform).First(&existing).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Create new stat
+			return r.db.Create(stat).Error
+		}
+		return err
+	}
+
+	// Update existing stat
+	stat.ID = existing.ID
+	return r.db.Save(stat).Error
 }

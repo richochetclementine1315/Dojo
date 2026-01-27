@@ -34,8 +34,8 @@ type PaginationMeta struct {
 }
 
 // SendSuccess sends a success response
-func SendSuccess(c *fiber.Ctx, message string, data interface{}) error {
-	return c.Status(fiber.StatusOK).JSON(SuccessResponse{
+func SendSuccess(c *fiber.Ctx, statusCode int, message string, data interface{}) error {
+	return c.Status(statusCode).JSON(SuccessResponse{
 		Success: true,
 		Message: message,
 		Data:    data,
@@ -52,7 +52,7 @@ func SendCreated(c *fiber.Ctx, message string, data interface{}) error {
 }
 
 // SendError sends an error response
-func SendError(c *fiber.Ctx, statusCode int, err error, message string) error {
+func SendError(c *fiber.Ctx, statusCode int, message string, err error) error {
 	errorMsg := ""
 	if err != nil {
 		errorMsg = err.Error()
@@ -66,33 +66,33 @@ func SendError(c *fiber.Ctx, statusCode int, err error, message string) error {
 }
 
 // SendBadRequest sends a 400 Bad Request response
-func SendBadRequest(c *fiber.Ctx, err error, message string) error {
-	return SendError(c, fiber.StatusBadRequest, err, message)
+func SendBadRequest(c *fiber.Ctx, message string, err error) error {
+	return SendError(c, fiber.StatusBadRequest, message, err)
 }
 
 // SendUnauthorized sends a 401 Unauthorized response
 func SendUnauthorized(c *fiber.Ctx, message string) error {
-	return SendError(c, fiber.StatusUnauthorized, nil, message)
+	return SendError(c, fiber.StatusUnauthorized, message, nil)
 }
 
 // SendForbidden sends a 403 Forbidden response
 func SendForbidden(c *fiber.Ctx, message string) error {
-	return SendError(c, fiber.StatusForbidden, nil, message)
+	return SendError(c, fiber.StatusForbidden, message, nil)
 }
 
 // SendNotFound sends a 404 Not Found response
 func SendNotFound(c *fiber.Ctx, message string) error {
-	return SendError(c, fiber.StatusNotFound, nil, message)
+	return SendError(c, fiber.StatusNotFound, message, nil)
 }
 
 // SendConflict sends a 409 Conflict response
 func SendConflict(c *fiber.Ctx, message string) error {
-	return SendError(c, fiber.StatusConflict, nil, message)
+	return SendError(c, fiber.StatusConflict, message, nil)
 }
 
 // SendInternalError sends a 500 Internal Server Error response
-func SendInternalError(c *fiber.Ctx, err error, message string) error {
-	return SendError(c, fiber.StatusInternalServerError, err, message)
+func SendInternalError(c *fiber.Ctx, message string, err error) error {
+	return SendError(c, fiber.StatusInternalServerError, message, err)
 }
 
 // SendPaginated sends a paginated response

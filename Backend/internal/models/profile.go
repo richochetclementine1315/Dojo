@@ -30,8 +30,7 @@ type UserProfile struct {
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 
 	// Relationship with User
-	User          User               `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
-	PlatformStats []UserPlatformStat `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
+	User User `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
 }
 
 // BeforeCreate Hook
@@ -48,20 +47,22 @@ func (UserProfile) TableName() string {
 }
 
 // UserPlatformStat holds detailed statistics for each coding platform.
+// UserPlatformStat holds detailed statistics for each coding platform.
 type UserPlatformStat struct {
-	ID            uuid.UUID  `gorm:"type:uuid; primaryKey; default:gen_random_uuid()" json:"id"`
-	UserID        uuid.UUID  `gorm:"type:uuid; not null; index" json:"user_id"`
-	Platform      string     `gorm:"type:varchar(50); not null" json:"platform"` // e.g., "leetcode", "codeforces"
-	Rating        int        ` json:"rating"`
-	MaxRating     int        ` json:"max_rating"`
-	SolvedCount   int        `gorm:"default:0" json:"solved_count"`
-	ContestRating int        ` json:"contest_rating"`
-	GlobalRank    int        ` json:"global_rank"`
-	CountryRank   int        ` json:"country_rank"`
-	RawData       string     `gorm:"type:jsonb" json:"raw_data"` // Store complete API response or additional data
-	LastSyncedAt  *time.Time ` json:"last_synced_at"`
-	CreatedAt     time.Time  `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt     time.Time  `gorm:"autoUpdateTime" json:"updated_at"`
+	ID                 uuid.UUID `gorm:"type:uuid; primaryKey; default:gen_random_uuid()" json:"id"`
+	UserID             uuid.UUID `gorm:"type:uuid; not null; index" json:"user_id"`
+	Platform           string    `gorm:"type:varchar(50); not null" json:"platform"` // e.g., "leetcode", "codeforces"
+	Rating             int       `json:"rating"`
+	MaxRating          int       `json:"max_rating"`
+	ProblemsSolved     int       `gorm:"default:0" json:"problems_solved"`
+	EasyProblemsSolved int       `gorm:"default:0" json:"easy_problems_solved"`
+	MedProblemsSolved  int       `gorm:"default:0" json:"med_problems_solved"`
+	HardProblemsSolved int       `gorm:"default:0" json:"hard_problems_solved"`
+	ContestsAttended   int       `gorm:"default:0" json:"contests_attended"`
+	GlobalRank         int       `json:"global_rank"`
+	LastSynced         time.Time `gorm:"autoUpdateTime" json:"last_synced"`
+	CreatedAt          time.Time `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt          time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 
 	// Relationship with User
 	User User `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`

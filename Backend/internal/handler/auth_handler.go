@@ -1,20 +1,24 @@
 package handler
 
 import (
+	"dojo/internal/config"
 	"dojo/internal/dto"
 	"dojo/internal/service"
 	"dojo/internal/utils"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type AuthHandler struct {
 	authService *service.AuthService
+	config      *config.Config
 }
 
-func NewAuthHandler(authService *service.AuthService) *AuthHandler {
+func NewAuthHandler(authService *service.AuthService, cfg *config.Config) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
+		config:      cfg,
 	}
 }
 
@@ -23,11 +27,11 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	var req dto.RegisterRequest
 	// parse request body
 	if err := c.BodyParser(&req); err != nil {
-		return utils.SendBadRequest(c, err, "Invalid Request Body")
+		return utils.SendBadRequest(c, "Invalid Request Body", err)
 	}
 	// validate request
 	if err := utils.ValidateStruct(&req); err != nil {
-		return utils.SendBadRequest(c, err, "Validation Error")
+		return utils.SendBadRequest(c, "Validation Error", err)
 	}
 	// Register user
 	tokenResponse, err := h.authService.Register(&req)
@@ -35,7 +39,7 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 		if err == utils.ErrEmailTaken || err == utils.ErrUsernameTaken {
 			return utils.SendConflict(c, err.Error())
 		}
-		return utils.SendInternalError(c, err, "Failed to register user")
+		return utils.SendInternalError(c, "Failed to register user", err)
 	}
 	return utils.SendCreated(c, "User registered successfully", tokenResponse)
 }
@@ -45,11 +49,11 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	var req dto.LoginRequest
 	// parse request body
 	if err := c.BodyParser(&req); err != nil {
-		return utils.SendBadRequest(c, err, "Invalid Request Body")
+		return utils.SendBadRequest(c, "Invalid Request Body", err)
 	}
 	// validate request
 	if err := utils.ValidateStruct(&req); err != nil {
-		return utils.SendBadRequest(c, err, "Validation Failed")
+		return utils.SendBadRequest(c, "Validation Failed", err)
 	}
 	// Login User
 	tokenResponse, err := h.authService.Login(&req)
@@ -57,57 +61,61 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		if err == utils.ErrInvalidCredentials {
 			return utils.SendUnauthorized(c, "Invalid Email or password")
 		}
-		return utils.SendInternalError(c, err, "Failed to login user")
+		return utils.SendInternalError(c, "Failed to login user", err)
 	}
-	return utils.SendSuccess(c, "Login Successful", tokenResponse)
+	return utils.SendSuccess(c, fiber.StatusOK, "Login Successful", tokenResponse)
 }
 
 // GoogleLogin handles Google OAuth login
 func (h *AuthHandler) GoogleLogin(c *fiber.Ctx) error {
-	// Return OAuth URL for the frontend to redirect
-	url := "https://accounts.google.com/o/oauth2/v2/auth"
-	return utils.SendSuccess(c, "Google OAuth URL", fiber.Map{
-		"url":     url,
-		"message": "Redirect User to this URL with appropriate parameters",
-	})
+	// Build Google OAuth URL with parameters
+	url := fmt.Sprintf(
+		"https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code&scope=email profile&access_type=offline",
+		h.config.OAuth.Google.ClientID,
+		h.config.OAuth.Google.RedirectURL,
+	)
+	// Redirect browser to Google
+	return c.Redirect(url, fiber.StatusFound)
 }
 
 // GoogleCallback handles Google OAuth callback
 func (h *AuthHandler) GoogleCallback(c *fiber.Ctx) error {
 	code := c.Query("code")
 	if code == "" {
-		return utils.SendBadRequest(c, nil, "Authorization Code required")
+		return utils.SendBadRequest(c, "Authorization Code required", nil)
 	}
 	// Handle OAuth
 	tokenResponse, err := h.authService.GoogleOAuth(code)
 	if err != nil {
-		return utils.SendInternalError(c, err, "Failed to authenticate with Google")
+		return utils.SendInternalError(c, "Failed to authenticate with Google", err)
 	}
-	return utils.SendSuccess(c, "Google authentication successful", tokenResponse)
+	return utils.SendSuccess(c, fiber.StatusOK, "Google authentication successful", tokenResponse)
 }
 
 // GithubLogin handles GitHub OAuth login
 func (h *AuthHandler) GitHubLogin(c *fiber.Ctx) error {
-	// Return OAuth URL for the frontend to redirect
-	url := "https://github.com/login/oauth/authorize"
-	return utils.SendSuccess(c, "GitHub OAuth URL", fiber.Map{
-		"url":     url,
-		"message": "Redirect User to this URL with appropriate parameters",
-	})
+	// Build GitHub OAuth URL with parameters
+	url := fmt.Sprintf(
+		"https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s&scope=user:email",
+		h.config.OAuth.GitHub.ClientID,
+		h.config.OAuth.GitHub.RedirectURL,
+	)
+	// Redirect browser to GitHub
+	return c.Redirect(url, fiber.StatusFound)
 }
 
 // GitHubCallback handles GitHub OAuth callback
 func (h *AuthHandler) GitHubCallback(c *fiber.Ctx) error {
 	code := c.Query("code")
 	if code == "" {
-		return utils.SendBadRequest(c, nil, "Authorization Code is required")
+		return utils.SendBadRequest(c, "Authorization Code is required", nil)
 	}
 	// Handle OAuth
 	tokenResponse, err := h.authService.GitHubOAuth(code)
 	if err != nil {
-		return utils.SendInternalError(c, err, "Failed to authenticate with GitHub")
+		return utils.SendInternalError(c, "Failed to authenticate with GitHub", err)
 	}
-	return utils.SendSuccess(c, "GitHub authentication successful", tokenResponse)
+	return utils.SendSuccess(c, fiber.StatusOK, "GitHub authentication successful", tokenResponse)
 }
 
 // RefreshToken handles token refreshing
@@ -115,11 +123,11 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 	var req dto.RefreshTokenRequest
 	// parse request body
 	if err := c.BodyParser(&req); err != nil {
-		return utils.SendBadRequest(c, err, "Invalid request body")
+		return utils.SendBadRequest(c, "Invalid request body", err)
 	}
 	// validate request
 	if err := utils.ValidateStruct(&req); err != nil {
-		return utils.SendBadRequest(c, err, "Validation failed")
+		return utils.SendBadRequest(c, "Validation failed", err)
 	}
 	// Refresh Token
 	tokenResponse, err := h.authService.RefreshAccessToken(req.RefreshToken)
@@ -127,9 +135,9 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		if err == utils.ErrInvalidToken || err == utils.ErrTokenExpired {
 			return utils.SendUnauthorized(c, err.Error())
 		}
-		return utils.SendInternalError(c, err, "Failed to refresh token")
+		return utils.SendInternalError(c, "Failed to refresh token", err)
 	}
-	return utils.SendSuccess(c, "Token refreshed successfully", tokenResponse)
+	return utils.SendSuccess(c, fiber.StatusOK, "Token refreshed successfully", tokenResponse)
 }
 
 // Logout handles user logout
@@ -138,12 +146,12 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 
 	// parse request body
 	if err := c.BodyParser(&req); err != nil {
-		return utils.SendBadRequest(c, err, "Invalid request body")
+		return utils.SendBadRequest(c, "Invalid request body", err)
 	}
 	// Logout User
 	err := h.authService.Logout(req.RefreshToken)
 	if err != nil {
-		return utils.SendInternalError(c, err, "Failed to logout user")
+		return utils.SendInternalError(c, "Failed to logout user", err)
 	}
-	return utils.SendSuccess(c, "Logout successful", nil)
+	return utils.SendSuccess(c, fiber.StatusOK, "Logout successful", nil)
 }

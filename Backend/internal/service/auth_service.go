@@ -109,11 +109,12 @@ func (s *AuthService) Login(req *dto.LoginRequest) (*dto.TokenResponse, error) {
 
 	// Check if user has password (not OAuth-only)
 	if user.PasswordHash == "" {
-		return nil, fmt.Errorf("please login with OAuth provider")
+		return nil, utils.ErrInvalidCredentials
 	}
 
 	// Verify password
-	if err := utils.ComparePassword(user.PasswordHash, req.Password); err != nil {
+	isValid := utils.ComparePassword(user.PasswordHash, req.Password)
+	if !isValid {
 		return nil, utils.ErrInvalidCredentials
 	}
 

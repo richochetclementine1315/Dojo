@@ -3,6 +3,7 @@ package main
 import (
 	"dojo/internal/config"
 	"dojo/internal/handler"
+	"dojo/internal/middleware"
 	"dojo/internal/models"
 	"dojo/internal/repository"
 	"dojo/internal/routes"
@@ -63,19 +64,27 @@ func main() {
 
 	// initialize Services
 	authService := service.NewAuthService(userRepo, authRepo, cfg)
+	userService := service.NewUserService(userRepo)
 
 	// Initialize handlers
-	authHandler := handler.NewAuthHandler(authService)
+	authHandler := handler.NewAuthHandler(authService, cfg)
+	userHandler := handler.NewUserHandler(userService)
 
 	// Create Fiber App
 	app := fiber.New(fiber.Config{
-		AppName: cfg.App.Name,
+		AppName:      cfg.App.Name,
+		ErrorHandler: middleware.ErrorHandler,
 	})
 	// TODO: Set up middlewares
+
+	app.Use(middleware.LoggerMiddleware())
+	app.Use(middleware.CORSMiddleware(cfg))
+	app.Use(middleware.RateLimitMiddleware(cfg))
 
 	// setup routes
 	handlers := &routes.Handlers{
 		Auth: authHandler,
+		User: userHandler,
 	}
 	routes.SetupRoutes(app, handlers, cfg)
 

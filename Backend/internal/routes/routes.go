@@ -3,6 +3,7 @@ package routes
 import (
 	"dojo/internal/config"
 	"dojo/internal/handler"
+	"dojo/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -30,8 +31,23 @@ func SetupRoutes(app *fiber.App, handlers *Handlers, cfg *config.Config) {
 		authRoutes.Post("/refresh", handlers.Auth.RefreshToken)
 		authRoutes.Post("/logout", handlers.Auth.Logout)
 	}
+	// Protected routes(require authentication)
+	protected := api.Group("", middleware.AuthMiddleware(cfg))
+	{
+		userRoutes := protected.Group("/users")
+		{
+			userRoutes.Get("/profile", handlers.User.GetProfile)
+			userRoutes.Put("/profile", handlers.User.UpdateProfile)
+			userRoutes.Patch("/account", handlers.User.UpdateUser)
+			userRoutes.Post("/change-password", handlers.User.ChangePassword)
+			userRoutes.Post("/sync-stats", handlers.User.SyncPlatformStats)
+
+		}
+
+	}
 }
 
 type Handlers struct {
 	Auth *handler.AuthHandler
+	User *handler.UserHandler
 }

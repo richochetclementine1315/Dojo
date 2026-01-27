@@ -20,12 +20,13 @@ type User struct {
 	UpdatedAt    time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 
 	// Relationships with other models
-	Profile       *UserProfile   `gorm:"foreignKey:UserID; constraint: OnDelete:CASCADE" json:"profile,omitempty"`
-	AuthAccounts  []AuthAccount  `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
-	RefreshTokens []RefreshToken `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
-	Notes         []UserNote     `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
-	Sheets        []ProblemSheet `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
-	Notifications []Notification `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
+	Profile       *UserProfile       `gorm:"foreignKey:UserID; constraint: OnDelete:CASCADE" json:"profile,omitempty"`
+	PlatformStats []UserPlatformStat `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"platform_stats,omitempty"`
+	AuthAccounts  []AuthAccount      `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
+	RefreshTokens []RefreshToken     `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
+	Notes         []UserNote         `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
+	Sheets        []ProblemSheet     `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
+	Notifications []Notification     `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
 }
 
 // BeforeCreate is a GORM hook that is triggered to generate a UUID before creating a new User record.
