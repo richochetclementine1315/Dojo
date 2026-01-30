@@ -128,6 +128,18 @@ func (s *ProblemService) UpdateProblem(id string, req *dto.UpdateProblemRequest)
 	if len(req.Tags) > 0 {
 		problem.Tags = pq.StringArray(req.Tags)
 	}
+	if req.AcceptanceRate > 0 {
+		problem.AcceptanceRate = req.AcceptanceRate
+	}
+	if req.Constraints != "" {
+		problem.Constraints = req.Constraints
+	}
+	if req.Examples != "" {
+		problem.Examples = req.Examples
+	}
+	if req.Hints != "" {
+		problem.Hints = req.Hints
+	}
 
 	if err := s.problemRepo.Update(problem); err != nil {
 		return nil, err

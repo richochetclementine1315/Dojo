@@ -61,15 +61,17 @@ func main() {
 	// Initialize repositories
 	userRepo := repository.NewUserRepository(db)
 	authRepo := repository.NewAuthRepository(db)
+	problemRepo := repository.NewProblemRepository(db)
 
 	// initialize Services
 	authService := service.NewAuthService(userRepo, authRepo, cfg)
 	userService := service.NewUserService(userRepo)
+	problemService := service.NewProblemService(problemRepo)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService, cfg)
 	userHandler := handler.NewUserHandler(userService)
-
+	problemHandler := handler.NewProblemHandler(problemService)
 	// Create Fiber App
 	app := fiber.New(fiber.Config{
 		AppName:      cfg.App.Name,
@@ -83,8 +85,9 @@ func main() {
 
 	// setup routes
 	handlers := &routes.Handlers{
-		Auth: authHandler,
-		User: userHandler,
+		Auth:    authHandler,
+		User:    userHandler,
+		Problem: problemHandler,
 	}
 	routes.SetupRoutes(app, handlers, cfg)
 

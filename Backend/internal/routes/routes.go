@@ -43,11 +43,21 @@ func SetupRoutes(app *fiber.App, handlers *Handlers, cfg *config.Config) {
 			userRoutes.Post("/sync-stats", handlers.User.SyncPlatformStats)
 
 		}
+		// Problem Routes
+		problemRoutes := protected.Group("/problems")
+		{
+			problemRoutes.Get("", handlers.Problem.ListProblems)
+			problemRoutes.Post("", handlers.Problem.CreateProblem)
+			problemRoutes.Get("/:id", handlers.Problem.GetProblem)
+			problemRoutes.Put("/:id", handlers.Problem.UpdateProblem)
+			problemRoutes.Delete("/:id", handlers.Problem.DeleteProblem)
+		}
 
 	}
 }
 
 type Handlers struct {
-	Auth *handler.AuthHandler
-	User *handler.UserHandler
+	Auth    *handler.AuthHandler
+	User    *handler.UserHandler
+	Problem *handler.ProblemHandler
 }
