@@ -134,10 +134,10 @@ func (s *ProblemService) UpdateProblem(id string, req *dto.UpdateProblemRequest)
 	if req.Constraints != "" {
 		problem.Constraints = req.Constraints
 	}
-	if req.Examples != "" {
+	if len(req.Examples) > 0 {
 		problem.Examples = req.Examples
 	}
-	if req.Hints != "" {
+	if len(req.Hints) > 0 {
 		problem.Hints = req.Hints
 	}
 

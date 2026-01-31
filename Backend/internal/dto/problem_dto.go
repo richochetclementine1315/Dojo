@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -8,20 +9,20 @@ import (
 
 // ProblemResponse represents the problem data returned in API responses
 type ProblemResponse struct {
-	ID                uuid.UUID `json:"id"`
-	Platform          string    `json:"platform"`
-	PlatformProblemID string    `json:"platform_problem_id"`
-	Title             string    `json:"title"`
-	Slug              string    `json:"slug"`
-	Difficulty        string    `json:"difficulty"`
-	Tags              []string  `json:"tags"`
-	AcceptanceRate    float64   `json:"acceptance_rate"`
-	ProblemURL        string    `json:"problem_url"`
-	Description       string    `json:"description"`
-	Constraints       string    `json:"constraints"`
-	Examples          string    `json:"examples"`
-	Hints             string    `json:"hints"`
-	CreatedAt         time.Time `json:"created_at"`
+	ID                uuid.UUID       `json:"id"`
+	Platform          string          `json:"platform"`
+	PlatformProblemID string          `json:"platform_problem_id"`
+	Title             string          `json:"title"`
+	Slug              string          `json:"slug"`
+	Difficulty        string          `json:"difficulty"`
+	Tags              []string        `json:"tags"`
+	AcceptanceRate    float64         `json:"acceptance_rate"`
+	ProblemURL        string          `json:"problem_url"`
+	Description       string          `json:"description"`
+	Constraints       string          `json:"constraints"`
+	Examples          json.RawMessage `json:"examples"`
+	Hints             json.RawMessage `json:"hints"`
+	CreatedAt         time.Time       `json:"created_at"`
 }
 type ProblemFilterRequest struct {
 	Platform   string   `query:"platform" validate:"omitempty,oneof=leetcode codeforces codechef gfg"`
@@ -102,29 +103,29 @@ type UpdateSheetProblemRequest struct {
 
 // CreateProblemRequest represents the request to create a problem
 type CreateProblemRequest struct {
-	Platform          string   `json:"platform" validate:"required,oneof=leetcode codeforces codechef gfg"`
-	PlatformProblemID string   `json:"platform_problem_id" validate:"required"`
-	Title             string   `json:"title" validate:"required,min=3,max=255"`
-	Slug              string   `json:"slug" validate:"required"`
-	Difficulty        string   `json:"difficulty" validate:"required,oneof=easy medium hard"`
-	Tags              []string `json:"tags"`
-	AcceptanceRate    float64  `json:"acceptance_rate" validate:"omitempty,min=0,max=100"`
-	ProblemURL        string   `json:"problem_url" validate:"required,url"`
-	Description       string   `json:"description" validate:"required"`
-	Constraints       string   `json:"constraints"`
-	Examples          string   `json:"examples"`
-	Hints             string   `json:"hints"`
+	Platform          string          `json:"platform" validate:"required,oneof=leetcode codeforces codechef gfg"`
+	PlatformProblemID string          `json:"platform_problem_id" validate:"required"`
+	Title             string          `json:"title" validate:"required,min=3,max=255"`
+	Slug              string          `json:"slug" validate:"required"`
+	Difficulty        string          `json:"difficulty" validate:"required,oneof=easy medium hard"`
+	Tags              []string        `json:"tags"`
+	AcceptanceRate    float64         `json:"acceptance_rate" validate:"omitempty,min=0,max=100"`
+	ProblemURL        string          `json:"problem_url" validate:"required,url"`
+	Description       string          `json:"description" validate:"required"`
+	Constraints       string          `json:"constraints"`
+	Examples          json.RawMessage `json:"examples"`
+	Hints             json.RawMessage `json:"hints"`
 }
 
 // UpdateProblemRequest represents the request to update a problem
 type UpdateProblemRequest struct {
-	Title          string   `json:"title" validate:"omitempty,min=3,max=255"`
-	Difficulty     string   `json:"difficulty" validate:"omitempty,oneof=easy medium hard"`
-	Tags           []string `json:"tags"`
-	AcceptanceRate float64  `json:"acceptance_rate" validate:"omitempty,min=0,max=100"`
-	ProblemURL     string   `json:"problem_url" validate:"omitempty,url"`
-	Description    string   `json:"description"`
-	Constraints    string   `json:"constraints"`
-	Examples       string   `json:"examples"`
-	Hints          string   `json:"hints"`
+	Title          string          `json:"title" validate:"omitempty,min=3,max=255"`
+	Difficulty     string          `json:"difficulty" validate:"omitempty,oneof=easy medium hard"`
+	Tags           []string        `json:"tags"`
+	AcceptanceRate float64         `json:"acceptance_rate" validate:"omitempty,min=0,max=100"`
+	ProblemURL     string          `json:"problem_url" validate:"omitempty,url"`
+	Description    string          `json:"description"`
+	Constraints    string          `json:"constraints"`
+	Examples       json.RawMessage `json:"examples"`
+	Hints          json.RawMessage `json:"hints"`
 }

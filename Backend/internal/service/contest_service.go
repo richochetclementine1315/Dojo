@@ -4,8 +4,10 @@ import (
 	"dojo/internal/dto"
 	"dojo/internal/models"
 	"dojo/internal/repository"
+	"dojo/internal/service/scrapper"
 	"dojo/internal/utils"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -155,4 +157,49 @@ func (s *ContestService) mapReminderToResponse(reminder *models.ContestReminder)
 		IsNotified:          reminder.IsNotified,
 		CreatedAt:           reminder.CreatedAt,
 	}
+}
+
+// SyncContestsFromPlatform fetches contests from external platforms and stores them
+func (s *ContestService) SyncContestsFromPlatform(platform string) (int, error) {
+	var contests []scrapper.ContestInfo
+	var err error
+
+	switch platform {
+	case "codeforces":
+		contests, err = scrapper.FetchCodeforcesContests()
+	case "leetcode":
+		contests, err = scrapper.FetchLeetCodeContests()
+	case "all":
+		contests, err = scrapper.FetchAllContests()
+	default:
+		return 0, fmt.Errorf("unsupported platform: %s", platform)
+	}
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to fetch contests from %s: %w", platform, err)
+	}
+
+	// Store contests in database
+	stored := 0
+	for _, contestInfo := range contests {
+		contest := &models.Contest{
+			Platform:        contestInfo.Platform,
+			Name:            contestInfo.Name,
+			StartTime:       contestInfo.StartTime,
+			DurationSeconds: contestInfo.Duration,
+			ContestURL:      contestInfo.ContestURL,
+		}
+
+		// Try to create, skip if already exists
+		if err := s.contestRepo.Create(contest); err != nil {
+			// Skip duplicates, but log other errors
+			if !errors.Is(err, gorm.ErrDuplicatedKey) {
+				fmt.Printf("Warning: Failed to store contest '%s': %v\n", contest.Name, err)
+			}
+			continue
+		}
+		stored++
+	}
+
+	return stored, nil
 }

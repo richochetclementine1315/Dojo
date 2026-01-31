@@ -59,6 +59,11 @@ func (r *ContestRepository) FindByID(id string) (*models.Contest, error) {
 	return &contest, nil
 }
 
+// Create creates a new contest
+func (r *ContestRepository) Create(contest *models.Contest) error {
+	return r.db.Create(contest).Error
+}
+
 // CreareRemainder createes a new contest remainder
 func (r *ContestRepository) CreateReminder(reminder *models.ContestReminder) error {
 	return r.db.Create(reminder).Error

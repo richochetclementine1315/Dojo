@@ -106,3 +106,22 @@ func (h *ContestHandler) DeleteReminder(c *fiber.Ctx) error {
 
 	return utils.SendSuccess(c, fiber.StatusOK, "Reminder deleted successfully", nil)
 }
+
+// SyncContests handles POST /api/contests/sync?platform=codeforces|leetcode|all
+func (h *ContestHandler) SyncContests(c *fiber.Ctx) error {
+	platform := c.Query("platform", "all")
+
+	if platform != "codeforces" && platform != "leetcode" && platform != "all" {
+		return utils.SendBadRequest(c, "Invalid platform. Must be: codeforces, leetcode, or all", nil)
+	}
+
+	count, err := h.contestService.SyncContestsFromPlatform(platform)
+	if err != nil {
+		return utils.SendInternalError(c, "Failed to sync contests", err)
+	}
+
+	return utils.SendSuccess(c, fiber.StatusOK, "Contests synced successfully", fiber.Map{
+		"platform":       platform,
+		"contests_added": count,
+	})
+}

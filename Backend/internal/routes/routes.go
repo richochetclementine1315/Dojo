@@ -57,8 +57,43 @@ func SetupRoutes(app *fiber.App, handlers *Handlers, cfg *config.Config) {
 		{
 			contestRoutes.Get("", handlers.Contest.ListContests)
 			contestRoutes.Get("/:id", handlers.Contest.GetContest)
+			contestRoutes.Post("/sync", handlers.Contest.SyncContests)
 			contestRoutes.Post("/reminders", handlers.Contest.CreateReminder)
 			contestRoutes.Delete("/reminders/:id", handlers.Contest.DeleteReminder)
+		}
+		sheetRoutes := protected.Group("/sheets")
+		{
+			sheetRoutes.Get("/public", handlers.Sheet.GetPublicSheets)
+			sheetRoutes.Get("", handlers.Sheet.GetUserSheets)
+			sheetRoutes.Post("", handlers.Sheet.CreateSheet)
+			sheetRoutes.Get("/:id", handlers.Sheet.GetSheet)
+			sheetRoutes.Put("/:id", handlers.Sheet.UpdateSheet)
+			sheetRoutes.Delete("/:id", handlers.Sheet.DeleteSheet)
+			sheetRoutes.Post("/:id/problems", handlers.Sheet.AddProblemToSheet)
+			sheetRoutes.Delete("/:id/problems/:problemId", handlers.Sheet.RemoveProblemFromSheet)
+			sheetRoutes.Patch("/:id/problems/:problemId", handlers.Sheet.UpdateSheetProblem)
+		}
+		// Social Routes (protected)
+		socialRoutes := protected.Group("/social")
+		{
+			// Friend requests
+			socialRoutes.Post("/friends/requests", handlers.Social.SendFriendRequest)
+			socialRoutes.Get("/friends/requests/received", handlers.Social.GetReceivedRequests)
+			socialRoutes.Get("/friends/requests/sent", handlers.Social.GetSentRequests)
+			socialRoutes.Patch("/friends/requests/:id", handlers.Social.RespondToFriendRequest)
+			socialRoutes.Delete("/friends/requests/:id", handlers.Social.CancelFriendRequest)
+
+			// Friends
+			socialRoutes.Get("/friends", handlers.Social.GetFriends)
+			socialRoutes.Delete("/friends/:id", handlers.Social.RemoveFriend)
+
+			// Blocks
+			socialRoutes.Post("/blocks", handlers.Social.BlockUser)
+			socialRoutes.Get("/blocks", handlers.Social.GetBlockedUsers)
+			socialRoutes.Delete("/blocks/:id", handlers.Social.UnblockUser)
+
+			// Search
+			socialRoutes.Get("/users/search", handlers.Social.SearchUsers)
 		}
 
 	}
@@ -69,4 +104,6 @@ type Handlers struct {
 	User    *handler.UserHandler
 	Problem *handler.ProblemHandler
 	Contest *handler.ContestHandler
+	Sheet   *handler.SheetHandler
+	Social  *handler.SocialHandler
 }

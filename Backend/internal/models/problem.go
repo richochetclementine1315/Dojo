@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,21 +11,21 @@ import (
 
 // Problem represents a coding problem from various platforms
 type Problem struct {
-	ID                uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	Platform          string         `gorm:"type:varchar(50);not null;index" json:"platform"` // 'leetcode', 'codeforces', etc.
-	PlatformProblemID string         `gorm:"type:varchar(255);not null" json:"platform_problem_id"`
-	Title             string         `gorm:"type:varchar(500);not null" json:"title"`
-	Slug              string         `gorm:"type:varchar(500)" json:"slug"`
-	Difficulty        string         `gorm:"type:varchar(20);index" json:"difficulty"` // 'easy', 'medium', 'hard'
-	Tags              pq.StringArray `gorm:"type:text[]" json:"tags"`                  // PostgreSQL array
-	AcceptanceRate    float64        `json:"acceptance_rate"`
-	ProblemURL        string         `gorm:"type:text" json:"problem_url"`
-	Description       string         `gorm:"type:text" json:"description"`
-	Constraints       string         `gorm:"type:text" json:"constraints"`
-	Examples          string         `gorm:"type:jsonb" json:"examples"`
-	Hints             string         `gorm:"type:jsonb" json:"hints"`
-	CreatedAt         time.Time      `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt         time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	ID                uuid.UUID       `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	Platform          string          `gorm:"type:varchar(50);not null;index" json:"platform"` // 'leetcode', 'codeforces', etc.
+	PlatformProblemID string          `gorm:"type:varchar(255);not null" json:"platform_problem_id"`
+	Title             string          `gorm:"type:varchar(500);not null" json:"title"`
+	Slug              string          `gorm:"type:varchar(500)" json:"slug"`
+	Difficulty        string          `gorm:"type:varchar(20);index" json:"difficulty"` // 'easy', 'medium', 'hard'
+	Tags              pq.StringArray  `gorm:"type:text[]" json:"tags"`                  // PostgreSQL array
+	AcceptanceRate    float64         `json:"acceptance_rate"`
+	ProblemURL        string          `gorm:"type:text" json:"problem_url"`
+	Description       string          `gorm:"type:text" json:"description"`
+	Constraints       string          `gorm:"type:text" json:"constraints"`
+	Examples          json.RawMessage `gorm:"type:jsonb" json:"examples"`
+	Hints             json.RawMessage `gorm:"type:jsonb" json:"hints"`
+	CreatedAt         time.Time       `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt         time.Time       `gorm:"autoUpdateTime" json:"updated_at"`
 
 	// Relationships
 	Notes         []UserNote     `gorm:"foreignKey:ProblemID;constraint:OnDelete:CASCADE" json:"-"`
