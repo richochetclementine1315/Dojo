@@ -52,6 +52,14 @@ func SetupRoutes(app *fiber.App, handlers *Handlers, cfg *config.Config) {
 			problemRoutes.Put("/:id", handlers.Problem.UpdateProblem)
 			problemRoutes.Delete("/:id", handlers.Problem.DeleteProblem)
 		}
+		// Contest Routes
+		contestRoutes := protected.Group("/contests")
+		{
+			contestRoutes.Get("", handlers.Contest.ListContests)
+			contestRoutes.Get("/:id", handlers.Contest.GetContest)
+			contestRoutes.Post("/reminders", handlers.Contest.CreateReminder)
+			contestRoutes.Delete("/reminders/:id", handlers.Contest.DeleteReminder)
+		}
 
 	}
 }
@@ -60,4 +68,5 @@ type Handlers struct {
 	Auth    *handler.AuthHandler
 	User    *handler.UserHandler
 	Problem *handler.ProblemHandler
+	Contest *handler.ContestHandler
 }

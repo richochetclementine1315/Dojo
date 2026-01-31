@@ -25,6 +25,9 @@ type ContestFilterRequest struct {
 	StartDate *time.Time `json:"start_date"`
 	EndDate   *time.Time `json:"end_date"`
 	Upcoming  bool       `json:"upcoming"` // if true, fetch only upcoming contests
+	Ongoing   bool       `json:"ongoing"`  // if true, fetch only ongoing contests
+	Page      int        `json:"page"`
+	Limit     int        `json:"limit"`
 }
 
 // CreateReminderRequest represents create contest reminder request

@@ -62,16 +62,18 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	authRepo := repository.NewAuthRepository(db)
 	problemRepo := repository.NewProblemRepository(db)
+	contestRepo := repository.NewContestRepository(db)
 
 	// initialize Services
 	authService := service.NewAuthService(userRepo, authRepo, cfg)
 	userService := service.NewUserService(userRepo)
 	problemService := service.NewProblemService(problemRepo)
-
+	contestService := service.NewContestService(contestRepo)
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService, cfg)
 	userHandler := handler.NewUserHandler(userService)
 	problemHandler := handler.NewProblemHandler(problemService)
+	contestHandler := handler.NewContestHandler(contestService)
 	// Create Fiber App
 	app := fiber.New(fiber.Config{
 		AppName:      cfg.App.Name,
@@ -88,6 +90,7 @@ func main() {
 		Auth:    authHandler,
 		User:    userHandler,
 		Problem: problemHandler,
+		Contest: contestHandler,
 	}
 	routes.SetupRoutes(app, handlers, cfg)
 

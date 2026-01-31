@@ -33,7 +33,8 @@ var (
 	ErrProblemAlreadyInSheet = errors.New("problem already exists in this sheet")
 
 	// Contest errors
-	ErrContestNotFound = errors.New("contest not found")
+	ErrContestNotFound  = errors.New("contest not found")
+	ErrReminderNotFound = errors.New("reminder not found")
 
 	// Room errors
 	ErrRoomNotFound  = errors.New("room not found")
