@@ -9,6 +9,7 @@ import (
 	"dojo/internal/routes"
 	"dojo/internal/service"
 	"dojo/internal/utils"
+	"dojo/internal/websocket"
 	"dojo/pkg/database"
 	"log"
 
@@ -65,6 +66,7 @@ func main() {
 	contestRepo := repository.NewContestRepository(db)
 	sheetRepo := repository.NewSheetRepository(db)
 	socialRepo := repository.NewSocialRepository(db)
+	roomRepo := repository.NewRoomRepository(db)
 
 	// initialize Services
 	authService := service.NewAuthService(userRepo, authRepo, cfg)
@@ -73,6 +75,7 @@ func main() {
 	contestService := service.NewContestService(contestRepo)
 	sheetService := service.NewSheetService(sheetRepo, problemRepo)
 	socialService := service.NewSocialService(socialRepo, userRepo)
+	roomService := service.NewRoomService(roomRepo, userRepo)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService, cfg)
@@ -81,6 +84,15 @@ func main() {
 	contestHandler := handler.NewContestHandler(contestService)
 	sheetHandler := handler.NewSheetHandler(sheetService)
 	socialHandler := handler.NewSocialHandler(socialService)
+	roomHandler := handler.NewRoomHandler(roomService)
+
+	// Initialize WebSocket Hub
+	wsHub := websocket.NewHub()
+	// Starting hub in background
+	go wsHub.Run()
+	// Initialize WebSocket handler
+	roomWSHandler := websocket.NewRoomHandler(wsHub)
+
 	// Create Fiber App
 	app := fiber.New(fiber.Config{
 		AppName:      cfg.App.Name,
@@ -100,6 +112,8 @@ func main() {
 		Contest: contestHandler,
 		Sheet:   sheetHandler,
 		Social:  socialHandler,
+		Room:    roomHandler,
+		RoomWS:  roomWSHandler,
 	}
 	routes.SetupRoutes(app, handlers, cfg)
 

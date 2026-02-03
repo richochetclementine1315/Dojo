@@ -4,8 +4,10 @@ import (
 	"dojo/internal/config"
 	"dojo/internal/handler"
 	"dojo/internal/middleware"
+	"dojo/internal/websocket"
 
 	"github.com/gofiber/fiber/v2"
+	fiberws "github.com/gofiber/contrib/websocket"
 )
 
 // SetUpRoutes sets up all the routes for the application
@@ -96,6 +98,21 @@ func SetupRoutes(app *fiber.App, handlers *Handlers, cfg *config.Config) {
 			socialRoutes.Get("/users/search", handlers.Social.SearchUsers)
 		}
 
+		// Room Routes
+		roomRoutes := protected.Group("/rooms")
+		{
+			roomRoutes.Post("", handlers.Room.CreateRoom)
+			roomRoutes.Get("", handlers.Room.GetUserRooms)
+			roomRoutes.Post("/join", handlers.Room.JoinRoom)
+			roomRoutes.Get("/:id", handlers.Room.GetRoom)
+			roomRoutes.Post("/:id/leave", handlers.Room.LeaveRoom)
+			roomRoutes.Delete("/:id", handlers.Room.DeleteRoom)
+			roomRoutes.Get("/:id/code", handlers.Room.GetCodeSession)
+			roomRoutes.Put("/:id/code", handlers.Room.UpdateCodeSession)
+
+			// WebSocket Connection
+			roomRoutes.Get("/:id/ws", handlers.RoomWS.UpgradeConnection, fiberws.New(handlers.RoomWS.HandleConnection))
+		}
 	}
 }
 
@@ -106,4 +123,6 @@ type Handlers struct {
 	Contest *handler.ContestHandler
 	Sheet   *handler.SheetHandler
 	Social  *handler.SocialHandler
+	Room    *handler.RoomHandler
+	RoomWS  *websocket.RoomHandler
 }
