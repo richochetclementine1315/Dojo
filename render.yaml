@@ -1,0 +1,73 @@
+# Render Blueprint for Backend + Database deployment
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: dojo-database
+    plan: free
+    region: oregon
+    databaseName: DojoDB
+    user: dojo
+
+  # Backend API (Go + Fiber)
+  - type: web
+    name: dojo-backend
+    runtime: go
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: go build -o main ./cmd/api
+    startCommand: ./main
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_PORT
+        value: 10000
+      - key: APP_NAME
+        value: Dojo
+      - key: DB_HOST
+        fromDatabase:
+          name: dojo-database
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: dojo-database
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: dojo-database
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: dojo-database
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: dojo-database
+          property: database
+      - key: DB_SSLMODE
+        value: require
+      - key: DB_TIMEZONE
+        value: UTC
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRY
+        value: 15m
+      - key: JWT_REFRESH_EXPIRY
+        value: 168h
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URL
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_REDIRECT_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: RATE_LIMIT_WINDOW
+        value: 1m

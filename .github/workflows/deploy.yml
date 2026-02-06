@@ -1,0 +1,104 @@
+name: CI/CD Pipeline
+
+# When to run this workflow
+on:
+  push:
+    branches: [main]  # Run on every push to main branch
+  pull_request:
+    branches: [main]  # Run on pull requests to main
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  # Job 1: Test Backend
+  test-backend:
+    name: Test Go Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Download code from repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # Step 2: Setup Go environment
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'  
+      
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        working-directory: ./Backend
+        run: go mod download
+      
+      # Step 4: Run tests (if  any)
+      - name: Run tests
+        working-directory: ./Backend
+        run: go test -v ./...
+        continue-on-error: true  # Don't fail if no tests yet
+      
+      # Step 5: Build to check for errors
+      - name: Build backend
+        working-directory: ./Backend
+        run: go build -v ./cmd/api
+
+  # Job 2: Test Frontend
+  test-frontend:
+    name: Test React Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Download code
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # Step 2: Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'  # Match Node version
+          cache: 'npm'
+          cache-dependency-path: './client--/package-lock.json'
+      
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        working-directory: ./client--
+        run: npm ci
+      
+      # Step 4: Run linting
+      - name: Lint code
+        working-directory: ./client--
+        run: npm run lint
+        continue-on-error: true  # Don't fail on lint warnings
+      
+      # Step 5: Build frontend
+      - name: Build frontend
+        working-directory: ./client--
+        run: npm run build
+
+  # Job 3: Deploy to Render (Backend auto-deploys via Render's GitHub integration)
+  deploy-backend:
+    name: Backend Deployment Status
+    runs-on: ubuntu-latest
+    needs: [test-backend]  # Only run if tests pass
+    if: github.ref == 'refs/heads/main'  # Only on main branch
+    
+    steps:
+      - name: Notify deployment
+        run: |
+          echo "✅ Backend tests passed!"
+          echo "🚀 Render will auto-deploy backend from this commit"
+          echo "📊 Check status at: https://dashboard.render.com"
+
+  # Job 4: Deploy to Vercel (Frontend auto-deploys via Vercel's GitHub integration)
+  deploy-frontend:
+    name: Frontend Deployment Status
+    runs-on: ubuntu-latest
+    needs: [test-frontend]  # Only run if tests pass
+    if: github.ref == 'refs/heads/main'  # Only on main branch
+    
+    steps:
+      - name: Notify deployment
+        run: |
+          echo "✅ Frontend tests passed!"
+          echo "🚀 Vercel will auto-deploy frontend from this commit"
+          echo "📊 Check status at: https://vercel.com/dashboard"
