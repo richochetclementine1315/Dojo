@@ -6,6 +6,7 @@ import (
 	"dojo/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type ContestHandler struct {
@@ -68,7 +69,7 @@ func (h *ContestHandler) CreateReminder(c *fiber.Ctx) error {
 	}
 
 	// Get user ID from context (set by auth middleware)
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	reminder, err := h.contestService.CreateReminder(userID, &req)
 	if err != nil {
@@ -91,7 +92,7 @@ func (h *ContestHandler) DeleteReminder(c *fiber.Ctx) error {
 	reminderID := c.Params("id")
 
 	// Get user ID from context
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	err := h.contestService.DeleteReminder(userID, reminderID)
 	if err != nil {

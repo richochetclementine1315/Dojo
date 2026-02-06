@@ -6,8 +6,8 @@ import (
 	"dojo/internal/middleware"
 	"dojo/internal/websocket"
 
-	"github.com/gofiber/fiber/v2"
 	fiberws "github.com/gofiber/contrib/websocket"
+	"github.com/gofiber/fiber/v2"
 )
 
 // SetUpRoutes sets up all the routes for the application
@@ -33,6 +33,14 @@ func SetupRoutes(app *fiber.App, handlers *Handlers, cfg *config.Config) {
 		authRoutes.Post("/refresh", handlers.Auth.RefreshToken)
 		authRoutes.Post("/logout", handlers.Auth.Logout)
 	}
+
+	// Public contest routes (no authentication required)
+	contestRoutes := api.Group("/contests")
+	{
+		contestRoutes.Get("", handlers.Contest.ListContests)
+		contestRoutes.Get("/:id", handlers.Contest.GetContest)
+	}
+
 	// Protected routes(require authentication)
 	protected := api.Group("", middleware.AuthMiddleware(cfg))
 	{
@@ -54,14 +62,12 @@ func SetupRoutes(app *fiber.App, handlers *Handlers, cfg *config.Config) {
 			problemRoutes.Put("/:id", handlers.Problem.UpdateProblem)
 			problemRoutes.Delete("/:id", handlers.Problem.DeleteProblem)
 		}
-		// Contest Routes
-		contestRoutes := protected.Group("/contests")
+		// Protected Contest Routes (sync and reminders require auth)
+		protectedContestRoutes := protected.Group("/contests")
 		{
-			contestRoutes.Get("", handlers.Contest.ListContests)
-			contestRoutes.Get("/:id", handlers.Contest.GetContest)
-			contestRoutes.Post("/sync", handlers.Contest.SyncContests)
-			contestRoutes.Post("/reminders", handlers.Contest.CreateReminder)
-			contestRoutes.Delete("/reminders/:id", handlers.Contest.DeleteReminder)
+			protectedContestRoutes.Post("/sync", handlers.Contest.SyncContests)
+			protectedContestRoutes.Post("/reminders", handlers.Contest.CreateReminder)
+			protectedContestRoutes.Delete("/reminders/:id", handlers.Contest.DeleteReminder)
 		}
 		sheetRoutes := protected.Group("/sheets")
 		{

@@ -5,6 +5,7 @@ import (
 	"dojo/internal/middleware"
 	"dojo/internal/service"
 	"dojo/internal/utils"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -147,22 +148,31 @@ func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 // SyncPlatformStats - POST /api/users/sync-stats
 // Syncs platform statistics from external coding platforms
 func (h *UserHandler) SyncPlatformStats(c *fiber.Ctx) error {
+	fmt.Println("DEBUG HANDLER: SyncPlatformStats endpoint called")
+
 	// Get user ID from auth middleware
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
+		fmt.Printf("DEBUG HANDLER: Auth error: %v\n", err)
 		return utils.SendError(c, fiber.StatusUnauthorized, "Unauthorized", err)
 	}
+
+	fmt.Printf("DEBUG HANDLER: UserID: %s\n", userID)
 
 	// Parse request body
 	var req struct {
 		Platforms []string `json:"platforms" validate:"required,min=1"`
 	}
 	if err := c.BodyParser(&req); err != nil {
+		fmt.Printf("DEBUG HANDLER: Body parse error: %v\n", err)
 		return utils.SendError(c, fiber.StatusBadRequest, "Invalid request body", err)
 	}
 
+	fmt.Printf("DEBUG HANDLER: Platforms requested: %v\n", req.Platforms)
+
 	// Validate request
 	if err := utils.ValidateStruct(&req); err != nil {
+		fmt.Printf("DEBUG HANDLER: Validation error: %v\n", err)
 		return utils.SendError(c, fiber.StatusBadRequest, "Validation failed", err)
 	}
 
@@ -183,11 +193,13 @@ func (h *UserHandler) SyncPlatformStats(c *fiber.Ctx) error {
 	// Sync platform stats
 	results, err := h.userService.SyncPlatformStats(userID.String(), req.Platforms)
 	if err != nil {
+		fmt.Printf("DEBUG HANDLER: Sync service error: %v\n", err)
 		if err == utils.ErrUserNotFound {
 			return utils.SendError(c, fiber.StatusNotFound, "User not found", err)
 		}
 		return utils.SendError(c, fiber.StatusInternalServerError, "Failed to sync platform stats", err)
 	}
 
+	fmt.Printf("DEBUG HANDLER: Sync results: %+v\n", results)
 	return utils.SendSuccess(c, fiber.StatusOK, "Platform stats sync completed", results)
 }

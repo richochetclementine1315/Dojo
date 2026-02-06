@@ -35,13 +35,16 @@ type ProfileResponse struct {
 
 // PlatformStatResponse represents the user's statistics on a coding platform
 type PlatformStatResponse struct {
-	Platform      string     `json:"platform"`
-	Rating        int        `json:"rating"`
-	MaxRating     int        `json:"max_rating"`
-	SolvedCount   int        `json:"solved_count"`
-	ContestRating int        `json:"contest_rating"`
-	GlobalRank    int        `json:"global_rank"`
-	LastSyncedAt  *time.Time `json:"last_synced_at"`
+	Platform         string     `json:"platform"`
+	Rating           int        `json:"rating"`
+	MaxRating        int        `json:"max_rating"`
+	SolvedCount      int        `json:"solved_count"`
+	EasySolved       int        `json:"easy_solved"`
+	MediumSolved     int        `json:"medium_solved"`
+	HardSolved       int        `json:"hard_solved"`
+	ContestsAttended int        `json:"contests_attended"`
+	GlobalRank       int        `json:"global_rank"`
+	LastSyncedAt     *time.Time `json:"last_synced_at"`
 }
 
 // UpdateProfileRequest represents the request payload for updating user profile

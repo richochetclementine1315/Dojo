@@ -13,16 +13,23 @@ import (
 // AuthMiddleware validates JWT token
 func AuthMiddleware(cfg *config.Config) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Get Authorization header
-		authHeader := c.Get("Authorization")
-		if authHeader == "" {
-			return utils.SendUnauthorized(c, "Missing authorization header")
-		}
+		var token string
 
-		// Extract token
-		token, err := utils.ExtractTokenFromHeader(authHeader)
-		if err != nil {
-			return utils.SendUnauthorized(c, "Invalid authorization header format")
+		// Get Authorization header first
+		authHeader := c.Get("Authorization")
+		if authHeader != "" {
+			// Extract token from header
+			var err error
+			token, err = utils.ExtractTokenFromHeader(authHeader)
+			if err != nil {
+				return utils.SendUnauthorized(c, "Invalid authorization header format")
+			}
+		} else {
+			// Check for token in query parameter (for WebSocket connections)
+			token = c.Query("token")
+			if token == "" {
+				return utils.SendUnauthorized(c, "Missing authorization token")
+			}
 		}
 
 		// Validate token

@@ -15,7 +15,7 @@ type Contest struct {
 	Name              string    `gorm:"type:varchar(500);not null" json:"name"`
 	StartTime         time.Time `gorm:"not null;index" json:"start_time"`
 	DurationSeconds   int       `gorm:"not null" json:"duration_seconds"`
-	ContestURL        string    `gorm:"type:text" json:"contest_url"`
+	ContestURL        string    `gorm:"type:text;index" json:"contest_url"`
 	Description       string    `gorm:"type:text" json:"description"`
 	CreatedAt         time.Time `gorm:"autoCreateTime" json:"created_at"`
 

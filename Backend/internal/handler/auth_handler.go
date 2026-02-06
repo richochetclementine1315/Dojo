@@ -89,7 +89,14 @@ func (h *AuthHandler) GoogleCallback(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.SendInternalError(c, "Failed to authenticate with Google", err)
 	}
-	return utils.SendSuccess(c, fiber.StatusOK, "Google authentication successful", tokenResponse)
+
+	// Redirect to frontend callback with tokens
+	redirectURL := fmt.Sprintf(
+		"http://localhost:5173/auth/google/callback?access_token=%s&refresh_token=%s",
+		tokenResponse.AccessToken,
+		tokenResponse.RefreshToken,
+	)
+	return c.Redirect(redirectURL, fiber.StatusFound)
 }
 
 // GithubLogin handles GitHub OAuth login
@@ -115,7 +122,14 @@ func (h *AuthHandler) GitHubCallback(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.SendInternalError(c, "Failed to authenticate with GitHub", err)
 	}
-	return utils.SendSuccess(c, fiber.StatusOK, "GitHub authentication successful", tokenResponse)
+
+	// Redirect to frontend callback with tokens
+	redirectURL := fmt.Sprintf(
+		"http://localhost:5173/auth/github/callback?access_token=%s&refresh_token=%s",
+		tokenResponse.AccessToken,
+		tokenResponse.RefreshToken,
+	)
+	return c.Redirect(redirectURL, fiber.StatusFound)
 }
 
 // RefreshToken handles token refreshing

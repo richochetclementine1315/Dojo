@@ -6,6 +6,7 @@ import (
 	"dojo/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type SocialHandler struct {
@@ -26,7 +27,7 @@ func (h *SocialHandler) SendFriendRequest(c *fiber.Ctx) error {
 		return utils.SendBadRequest(c, "Invalid request payload", err)
 	}
 
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	friendRequest, err := h.socialService.SendFriendRequest(userID, &req)
 	if err != nil {
@@ -55,7 +56,7 @@ func (h *SocialHandler) SendFriendRequest(c *fiber.Ctx) error {
 
 // GetReceivedRequests handles GET /api/social/friends/requests/received
 func (h *SocialHandler) GetReceivedRequests(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	requests, err := h.socialService.GetReceivedRequests(userID)
 	if err != nil {
@@ -69,7 +70,7 @@ func (h *SocialHandler) GetReceivedRequests(c *fiber.Ctx) error {
 
 // GetSentRequests handles GET /api/social/friends/requests/sent
 func (h *SocialHandler) GetSentRequests(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	requests, err := h.socialService.GetSentRequests(userID)
 	if err != nil {
@@ -84,7 +85,7 @@ func (h *SocialHandler) GetSentRequests(c *fiber.Ctx) error {
 // RespondToFriendRequest handles PATCH /api/social/friends/requests/:id
 func (h *SocialHandler) RespondToFriendRequest(c *fiber.Ctx) error {
 	requestID := c.Params("id")
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	var req dto.UpdateFriendRequestRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -111,7 +112,7 @@ func (h *SocialHandler) RespondToFriendRequest(c *fiber.Ctx) error {
 // CancelFriendRequest handles DELETE /api/social/friends/requests/:id
 func (h *SocialHandler) CancelFriendRequest(c *fiber.Ctx) error {
 	requestID := c.Params("id")
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	err := h.socialService.CancelFriendRequest(userID, requestID)
 	if err != nil {
@@ -129,7 +130,7 @@ func (h *SocialHandler) CancelFriendRequest(c *fiber.Ctx) error {
 
 // GetFriends handles GET /api/social/friends
 func (h *SocialHandler) GetFriends(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	friends, err := h.socialService.GetFriends(userID)
 	if err != nil {
@@ -144,7 +145,7 @@ func (h *SocialHandler) GetFriends(c *fiber.Ctx) error {
 // RemoveFriend handles DELETE /api/social/friends/:id
 func (h *SocialHandler) RemoveFriend(c *fiber.Ctx) error {
 	friendID := c.Params("id")
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	err := h.socialService.RemoveFriend(userID, friendID)
 	if err != nil {
@@ -165,7 +166,7 @@ func (h *SocialHandler) BlockUser(c *fiber.Ctx) error {
 		return utils.SendBadRequest(c, "Invalid request payload", err)
 	}
 
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	err := h.socialService.BlockUser(userID, &req)
 	if err != nil {
@@ -187,7 +188,7 @@ func (h *SocialHandler) BlockUser(c *fiber.Ctx) error {
 // UnblockUser handles DELETE /api/social/blocks/:id
 func (h *SocialHandler) UnblockUser(c *fiber.Ctx) error {
 	blockedID := c.Params("id")
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	err := h.socialService.UnblockUser(userID, blockedID)
 	if err != nil {
@@ -202,7 +203,7 @@ func (h *SocialHandler) UnblockUser(c *fiber.Ctx) error {
 
 // GetBlockedUsers handles GET /api/social/blocks
 func (h *SocialHandler) GetBlockedUsers(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	users, err := h.socialService.GetBlockedUsers(userID)
 	if err != nil {

@@ -182,23 +182,43 @@ func (s *ContestService) SyncContestsFromPlatform(platform string) (int, error) 
 	// Store contests in database
 	stored := 0
 	for _, contestInfo := range contests {
-		contest := &models.Contest{
-			Platform:        contestInfo.Platform,
-			Name:            contestInfo.Name,
-			StartTime:       contestInfo.StartTime,
-			DurationSeconds: contestInfo.Duration,
-			ContestURL:      contestInfo.ContestURL,
+		// Generate platform contest ID (using URL as fallback if not provided)
+		platformID := contestInfo.Platform + "_" + contestInfo.Name
+		if contestInfo.ContestURL != "" {
+			platformID = contestInfo.ContestURL
 		}
 
-		// Try to create, skip if already exists
+		contest := &models.Contest{
+			Platform:          contestInfo.Platform,
+			PlatformContestID: platformID,
+			Name:              contestInfo.Name,
+			StartTime:         contestInfo.StartTime,
+			DurationSeconds:   contestInfo.Duration,
+			ContestURL:        contestInfo.ContestURL,
+		}
+
+		// Create (FirstOrCreate will handle duplicates)
 		if err := s.contestRepo.Create(contest); err != nil {
-			// Skip duplicates, but log other errors
-			if !errors.Is(err, gorm.ErrDuplicatedKey) {
-				fmt.Printf("Warning: Failed to store contest '%s': %v\n", contest.Name, err)
-			}
+			fmt.Printf("Warning: Failed to store contest '%s': %v\n", contest.Name, err)
 			continue
 		}
 		stored++
+	}
+
+	// Cleanup old contests (older than 60 days)
+	deleted, err := s.contestRepo.DeleteOldContests(60)
+	if err != nil {
+		fmt.Printf("Warning: Failed to delete old contests: %v\n", err)
+	} else if deleted > 0 {
+		fmt.Printf("Cleaned up %d old contests\n", deleted)
+	}
+
+	// Cleanup old notified reminders
+	deletedReminders, err := s.contestRepo.DeleteOldNotifiedReminders()
+	if err != nil {
+		fmt.Printf("Warning: Failed to delete old reminders: %v\n", err)
+	} else if deletedReminders > 0 {
+		fmt.Printf("Cleaned up %d old reminders\n", deletedReminders)
 	}
 
 	return stored, nil

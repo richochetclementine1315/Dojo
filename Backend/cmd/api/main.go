@@ -12,6 +12,7 @@ import (
 	"dojo/internal/websocket"
 	"dojo/pkg/database"
 	"log"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -76,6 +77,12 @@ func main() {
 	sheetService := service.NewSheetService(sheetRepo, problemRepo)
 	socialService := service.NewSocialService(socialRepo, userRepo)
 	roomService := service.NewRoomService(roomRepo, userRepo)
+
+	// Initialize contest sync service
+	contestSyncService := service.NewContestSyncService(contestService)
+	// Sync contests every 6 hours
+	go contestSyncService.Start(6 * time.Hour)
+	log.Println("Contest sync service started (syncing every 6 hours)")
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService, cfg)

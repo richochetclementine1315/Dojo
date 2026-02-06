@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Noto+Sans+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-dojo-black-900 text-white font-japanese antialiased;
+  }
+}
+
+@layer utilities {
+  .dojo-text-gradient {
+    background: linear-gradient(135deg, #ff6b6b 0%, #dc143c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dojo-border-glow {
+    border: 1px solid rgba(220, 20, 60, 0.5);
+    box-shadow: 0 0 20px rgba(220, 20, 60, 0.3);
+  }
+
+  .dojo-card {
+    background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+    border: 1px solid rgba(220, 20, 60, 0.3);
+  }
+
+  .bg-dojo-gradient {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #dc143c 100%);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #ff6b6b, #dc143c);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ff0000;
+}

@@ -64,8 +64,8 @@ type UserPlatformStat struct {
 	CreatedAt          time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt          time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 
-	// Relationship with User
-	User User `gorm:"foreignKey:UserID; constraint:OnDelete:CASCADE" json:"-"`
+	// Relationship with User - explicitly set constraint name
+	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE,OnUpdate:CASCADE;constraintName:fk_user_platform_stats_user_id" json:"-"`
 }
 
 // BeforeCreate Hook

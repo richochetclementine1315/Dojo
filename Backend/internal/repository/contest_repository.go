@@ -59,9 +59,27 @@ func (r *ContestRepository) FindByID(id string) (*models.Contest, error) {
 	return &contest, nil
 }
 
-// Create creates a new contest
+// Create creates a new contest (with upsert to avoid duplicates)
 func (r *ContestRepository) Create(contest *models.Contest) error {
-	return r.db.Create(contest).Error
+	// Use FirstOrCreate to avoid duplicates based on URL
+	var existing models.Contest
+	result := r.db.Where("contest_url = ?", contest.ContestURL).FirstOrCreate(&existing, contest)
+	return result.Error
+}
+
+// DeleteOldContests removes contests older than specified days
+func (r *ContestRepository) DeleteOldContests(daysOld int) (int64, error) {
+	cutoffDate := time.Now().AddDate(0, 0, -daysOld)
+	result := r.db.Where("start_time < ?", cutoffDate).Delete(&models.Contest{})
+	return result.RowsAffected, result.Error
+}
+
+// DeleteOldNotifiedReminders removes notified reminders for contests that ended
+func (r *ContestRepository) DeleteOldNotifiedReminders() (int64, error) {
+	// Delete reminders for contests that ended more than 7 days ago and are already notified
+	cutoffDate := time.Now().AddDate(0, 0, -7)
+	result := r.db.Where("is_notified = ? AND created_at < ?", true, cutoffDate).Delete(&models.ContestReminder{})
+	return result.RowsAffected, result.Error
 }
 
 // CreareRemainder createes a new contest remainder

@@ -6,6 +6,7 @@ import (
 	"dojo/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type SheetHandler struct {
@@ -26,7 +27,7 @@ func (h *SheetHandler) CreateSheet(c *fiber.Ctx) error {
 		return utils.SendBadRequest(c, "Invalid request payload", err)
 	}
 
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	sheet, err := h.sheetService.CreateSheet(userID, &req)
 	if err != nil {
@@ -41,7 +42,7 @@ func (h *SheetHandler) CreateSheet(c *fiber.Ctx) error {
 // GetSheet handles GET /api/sheets/:id
 func (h *SheetHandler) GetSheet(c *fiber.Ctx) error {
 	sheetID := c.Params("id")
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	sheet, err := h.sheetService.GetSheetByID(userID, sheetID)
 	if err != nil {
@@ -61,7 +62,7 @@ func (h *SheetHandler) GetSheet(c *fiber.Ctx) error {
 
 // GetUserSheets handles GET /api/sheets
 func (h *SheetHandler) GetUserSheets(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	sheets, err := h.sheetService.GetUserSheets(userID)
 	if err != nil {
@@ -88,7 +89,7 @@ func (h *SheetHandler) GetPublicSheets(c *fiber.Ctx) error {
 // UpdateSheet handles PUT /api/sheets/:id
 func (h *SheetHandler) UpdateSheet(c *fiber.Ctx) error {
 	sheetID := c.Params("id")
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	var req dto.UpdateSheetRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -114,7 +115,7 @@ func (h *SheetHandler) UpdateSheet(c *fiber.Ctx) error {
 // DeleteSheet handles DELETE /api/sheets/:id
 func (h *SheetHandler) DeleteSheet(c *fiber.Ctx) error {
 	sheetID := c.Params("id")
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	err := h.sheetService.DeleteSheet(userID, sheetID)
 	if err != nil {
@@ -133,7 +134,7 @@ func (h *SheetHandler) DeleteSheet(c *fiber.Ctx) error {
 // AddProblemToSheet handles POST /api/sheets/:id/problems
 func (h *SheetHandler) AddProblemToSheet(c *fiber.Ctx) error {
 	sheetID := c.Params("id")
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	var req dto.AddProblemToSheetRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -166,7 +167,7 @@ func (h *SheetHandler) AddProblemToSheet(c *fiber.Ctx) error {
 func (h *SheetHandler) RemoveProblemFromSheet(c *fiber.Ctx) error {
 	sheetID := c.Params("id")
 	problemID := c.Params("problemId")
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	err := h.sheetService.RemoveProblemFromSheet(userID, sheetID, problemID)
 	if err != nil {
@@ -186,7 +187,7 @@ func (h *SheetHandler) RemoveProblemFromSheet(c *fiber.Ctx) error {
 func (h *SheetHandler) UpdateSheetProblem(c *fiber.Ctx) error {
 	sheetID := c.Params("id")
 	problemID := c.Params("problemId")
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 
 	var req dto.UpdateSheetProblemRequest
 	if err := c.BodyParser(&req); err != nil {

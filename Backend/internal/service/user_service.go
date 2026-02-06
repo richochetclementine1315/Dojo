@@ -7,6 +7,7 @@ import (
 	"dojo/internal/service/scrapper"
 	"dojo/internal/utils"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -186,21 +187,29 @@ func (s *UserService) SyncPlatformStats(userID string, platforms []string) (map[
 
 	results := make(map[string]interface{})
 
+	fmt.Printf("DEBUG: Starting sync for platforms: %v\n", platforms)
+
 	for _, platform := range platforms {
 		switch platform {
 		case "leetcode":
 			if user.Profile.LeetcodeUsername != "" {
+				fmt.Printf("DEBUG: Fetching LeetCode stats for username: %s\n", user.Profile.LeetcodeUsername)
 				stats, err := scrapper.FetchLeetCodeStats(user.Profile.LeetcodeUsername)
 				if err != nil {
+					fmt.Printf("DEBUG: LeetCode fetch error: %v\n", err)
 					results[platform] = map[string]string{"error": err.Error()}
 					continue
 				}
+				fmt.Printf("DEBUG: LeetCode stats fetched: Rank=%d, Solved=%d, Easy=%d, Medium=%d, Hard=%d\n",
+					stats.GlobalRank, stats.ProblemsSolved, stats.EasyProblemsSolved, stats.MedProblemsSolved, stats.HardProblemsSolved)
 				// Save or update stats in database
 				if err := s.savePlatformStats(userID, platform, stats); err != nil {
+					fmt.Printf("DEBUG: Failed to save LeetCode stats: %v\n", err)
 					results[platform] = map[string]string{"error": err.Error()}
 					continue
 				}
-				results[platform] = map[string]string{"status": "success"}
+				fmt.Printf("DEBUG: LeetCode stats saved successfully\n")
+				results[platform] = map[string]string{"status": "success", "message": "Stats synced successfully"}
 			} else {
 				results[platform] = map[string]string{"error": "LeetCode username not set"}
 			}
@@ -209,14 +218,25 @@ func (s *UserService) SyncPlatformStats(userID string, platforms []string) (map[
 			if user.Profile.CodeforcesUsername != "" {
 				stats, err := scrapper.FetchCodeforcesStats(user.Profile.CodeforcesUsername)
 				if err != nil {
+					// Even on error, try to save partial stats if available
+					if stats != nil && (stats.Rating > 0 || stats.ProblemsSolved > 0) {
+						if saveErr := s.savePlatformStats(userID, platform, stats); saveErr == nil {
+							results[platform] = map[string]string{
+								"status":  "partial",
+								"warning": err.Error(),
+								"message": "Saved available stats. Full sync failed.",
+							}
+							continue
+						}
+					}
 					results[platform] = map[string]string{"error": err.Error()}
 					continue
 				}
 				if err := s.savePlatformStats(userID, platform, stats); err != nil {
-					results[platform] = map[string]string{"error": err.Error()}
+					results[platform] = map[string]string{"error": "Failed to save stats: " + err.Error()}
 					continue
 				}
-				results[platform] = map[string]string{"status": "success"}
+				results[platform] = map[string]string{"status": "success", "message": "Stats synced successfully"}
 			} else {
 				results[platform] = map[string]string{"error": "Codeforces username not set"}
 			}
@@ -225,14 +245,25 @@ func (s *UserService) SyncPlatformStats(userID string, platforms []string) (map[
 			if user.Profile.CodechefUsername != "" {
 				stats, err := scrapper.FetchCodeChefStats(user.Profile.CodechefUsername)
 				if err != nil {
+					// Even on error, try to save partial stats if available
+					if stats != nil && (stats.Rating > 0 || stats.ProblemsSolved > 0) {
+						if saveErr := s.savePlatformStats(userID, platform, stats); saveErr == nil {
+							results[platform] = map[string]string{
+								"status":  "partial",
+								"warning": err.Error(),
+								"message": "Saved available stats. Full sync failed.",
+							}
+							continue
+						}
+					}
 					results[platform] = map[string]string{"error": err.Error()}
 					continue
 				}
 				if err := s.savePlatformStats(userID, platform, stats); err != nil {
-					results[platform] = map[string]string{"error": err.Error()}
+					results[platform] = map[string]string{"error": "Failed to save stats: " + err.Error()}
 					continue
 				}
-				results[platform] = map[string]string{"status": "success"}
+				results[platform] = map[string]string{"status": "success", "message": "Stats synced successfully"}
 			} else {
 				results[platform] = map[string]string{"error": "CodeChef username not set"}
 			}
@@ -241,14 +272,25 @@ func (s *UserService) SyncPlatformStats(userID string, platforms []string) (map[
 			if user.Profile.GFGUsername != "" {
 				stats, err := scrapper.FetchGFGStats(user.Profile.GFGUsername)
 				if err != nil {
+					// Even on error, try to save partial stats if available
+					if stats != nil && (stats.Rating > 0 || stats.ProblemsSolved > 0) {
+						if saveErr := s.savePlatformStats(userID, platform, stats); saveErr == nil {
+							results[platform] = map[string]string{
+								"status":  "partial",
+								"warning": err.Error(),
+								"message": "Saved available stats. Full sync failed.",
+							}
+							continue
+						}
+					}
 					results[platform] = map[string]string{"error": err.Error()}
 					continue
 				}
 				if err := s.savePlatformStats(userID, platform, stats); err != nil {
-					results[platform] = map[string]string{"error": err.Error()}
+					results[platform] = map[string]string{"error": "Failed to save stats: " + err.Error()}
 					continue
 				}
-				results[platform] = map[string]string{"status": "success"}
+				results[platform] = map[string]string{"status": "success", "message": "Stats synced successfully"}
 			} else {
 				results[platform] = map[string]string{"error": "GFG username not set"}
 			}
@@ -311,18 +353,29 @@ func (s *UserService) mapUserToResponse(user *models.User) *dto.UserResponse {
 			HardSolved:         user.Profile.HardSolved,
 		}
 
+		// Debug logging
+		fmt.Printf("DEBUG: User has %d platform stats\n", len(user.PlatformStats))
+		for _, stat := range user.PlatformStats {
+			fmt.Printf("DEBUG: Platform: %s, Rating: %d, Solved: %d, Easy: %d, Medium: %d, Hard: %d, Rank: %d\n",
+				stat.Platform, stat.Rating, stat.ProblemsSolved, stat.EasyProblemsSolved,
+				stat.MedProblemsSolved, stat.HardProblemsSolved, stat.GlobalRank)
+		}
+
 		// Add platform stats if available
 		if len(user.PlatformStats) > 0 {
 			response.Profile.PlatformStats = make([]dto.PlatformStatResponse, len(user.PlatformStats))
 			for i, stat := range user.PlatformStats {
 				response.Profile.PlatformStats[i] = dto.PlatformStatResponse{
-					Platform:      stat.Platform,
-					Rating:        stat.Rating,
-					MaxRating:     stat.MaxRating,
-					SolvedCount:   stat.ProblemsSolved,
-					ContestRating: 0,
-					GlobalRank:    stat.GlobalRank,
-					LastSyncedAt:  &stat.LastSynced,
+					Platform:         stat.Platform,
+					Rating:           stat.Rating,
+					MaxRating:        stat.MaxRating,
+					SolvedCount:      stat.ProblemsSolved,
+					EasySolved:       stat.EasyProblemsSolved,
+					MediumSolved:     stat.MedProblemsSolved,
+					HardSolved:       stat.HardProblemsSolved,
+					ContestsAttended: stat.ContestsAttended,
+					GlobalRank:       stat.GlobalRank,
+					LastSyncedAt:     &stat.LastSynced,
 				}
 			}
 		}
