@@ -1,13 +1,5 @@
 # Render Blueprint for Backend + Database deployment
 services:
-  # PostgreSQL Database
-  - type: pserv
-    name: dojo-database
-    plan: free
-    region: oregon
-    databaseName: DojoDB
-    user: dojo
-
   # Backend API (Go + Fiber)
   - type: web
     name: dojo-backend
@@ -25,26 +17,10 @@ services:
         value: 10000
       - key: APP_NAME
         value: Dojo
-      - key: DB_HOST
+      - key: DATABASE_URL
         fromDatabase:
           name: dojo-database
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: dojo-database
-          property: port
-      - key: DB_USER
-        fromDatabase:
-          name: dojo-database
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: dojo-database
-          property: password
-      - key: DB_NAME
-        fromDatabase:
-          name: dojo-database
-          property: database
+          property: connectionString
       - key: DB_SSLMODE
         value: require
       - key: DB_TIMEZONE
@@ -71,3 +47,10 @@ services:
         sync: false
       - key: RATE_LIMIT_WINDOW
         value: 1m
+
+databases:
+  - name: dojo-database
+    databaseName: DojoDB
+    user: dojo
+    plan: free
+    region: oregon
