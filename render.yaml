@@ -50,7 +50,5 @@ services:
 
 databases:
   - name: dojo-database
-    databaseName: DojoDB
-    user: dojo
     plan: free
     region: oregon
