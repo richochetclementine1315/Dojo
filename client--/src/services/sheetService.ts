@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-import type { Sheet, Problem, ApiResponse } from '@/types';
+import type { Sheet, ApiResponse } from '@/types';
 
 export const sheetService = {
   async getSheets() {

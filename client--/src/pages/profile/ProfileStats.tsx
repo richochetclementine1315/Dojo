@@ -14,7 +14,6 @@ import {
   Code2,
   Flame,
   Star,
-  Users,
   ExternalLink,
   RefreshCw,
   Loader2,

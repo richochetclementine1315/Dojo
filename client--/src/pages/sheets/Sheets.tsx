@@ -13,9 +13,7 @@ import {
   Trash2,
   Lock,
   Globe,
-  Edit,
-  CheckCircle,
-  Circle
+  Edit
 } from 'lucide-react';
 
 export default function Sheets() {

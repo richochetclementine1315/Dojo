@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { contestService } from '@/services/contestService';
 import type { Contest } from '@/types';

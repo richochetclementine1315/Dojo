@@ -40,7 +40,7 @@ interface Participant {
 export default function RoomDetail() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const { accessToken, user, ensureFreshToken } = useAuthStore();
+  const { user, ensureFreshToken } = useAuthStore();
   
   const [room, setRoom] = useState<Room | null>(null);
   const [isLoading, setIsLoading] = useState(true);

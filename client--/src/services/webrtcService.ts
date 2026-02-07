@@ -174,7 +174,7 @@ class WebRTCService {
 
   cleanup(): void {
     // Close all peer connections
-    this.peerConnections.forEach((peer, userId) => {
+    this.peerConnections.forEach((peer) => {
       peer.connection.close();
     });
     this.peerConnections.clear();

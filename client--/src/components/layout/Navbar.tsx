@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { Button } from '../ui/Button';
-import { Sword, Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { Menu, X, User, LogOut, Settings } from 'lucide-react';
 import { useState } from 'react';
 
 export function Navbar() {
