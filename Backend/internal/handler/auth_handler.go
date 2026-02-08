@@ -92,7 +92,8 @@ func (h *AuthHandler) GoogleCallback(c *fiber.Ctx) error {
 
 	// Redirect to frontend callback with tokens
 	redirectURL := fmt.Sprintf(
-		"http://localhost:5173/auth/google/callback?access_token=%s&refresh_token=%s",
+		"%s/auth/google/callback?access_token=%s&refresh_token=%s",
+		h.config.Server.FrontendURL,
 		tokenResponse.AccessToken,
 		tokenResponse.RefreshToken,
 	)
@@ -125,7 +126,8 @@ func (h *AuthHandler) GitHubCallback(c *fiber.Ctx) error {
 
 	// Redirect to frontend callback with tokens
 	redirectURL := fmt.Sprintf(
-		"http://localhost:5173/auth/github/callback?access_token=%s&refresh_token=%s",
+		"%s/auth/github/callback?access_token=%s&refresh_token=%s",
+		h.config.Server.FrontendURL,
 		tokenResponse.AccessToken,
 		tokenResponse.RefreshToken,
 	)
