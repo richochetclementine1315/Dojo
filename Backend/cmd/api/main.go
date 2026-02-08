@@ -126,7 +126,7 @@ func main() {
 
 	// Start server
 	log.Printf("Starting server on port %s", cfg.Server.Port)
-	err = app.Listen(":" + cfg.Server.Port)
+	err = app.Listen("0.0.0.0:" + cfg.Server.Port)
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
