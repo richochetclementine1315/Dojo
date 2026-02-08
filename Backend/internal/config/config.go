@@ -171,6 +171,13 @@ func LoadConfig() (*Config, error) {
 
 // Get DSN returns the Data Source Name for PGSQL database connection.
 func (c *Config) GetDSN() string {
+	// Check if DATABASE_URL is set (used in production/cloud deployments)
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL != "" {
+		return databaseURL
+	}
+
+	// Fall back to individual database variables (used in local development)
 	return fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s TimeZone=%s",
 		c.Database.Host,
