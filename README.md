@@ -224,6 +224,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 📧 Contact
 
-Mrinmoy - [@yourhandle](https://twitter.com/yourhandle)
+Mrinmoy - [LinkedIn](https://www.linkedin.com/in/mrinmoy-matilal)
 
 Project Link: [https://github.com/richochetclementine1315/Dojo](https://github.com/richochetclementine1315/Dojo)
