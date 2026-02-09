@@ -48,12 +48,16 @@ export default function PlatformSettings() {
     try {
       setIsLoading(true);
       const data = await authService.getMe();
-      setUsernames({
+      console.log('Fetched profile data:', data);
+      console.log('Profile object:', data.profile);
+      const fetchedUsernames = {
         leetcode_username: data.profile?.leetcode_username || data.leetcode_username || '',
         codeforces_username: data.profile?.codeforces_username || data.codeforces_username || '',
         codechef_username: data.profile?.codechef_username || data.codechef_username || '',
         gfg_username: data.profile?.gfg_username || data.gfg_username || '',
-      });
+      };
+      console.log('Setting usernames to:', fetchedUsernames);
+      setUsernames(fetchedUsernames);
     } catch (err: any) {
       console.error('Failed to fetch profile:', err);
       setError('Failed to load profile');
