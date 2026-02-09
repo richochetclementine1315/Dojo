@@ -1,4 +1,17 @@
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/a6d002d6-c132-4c2c-99d3-5ab05f197116" alt="Dojo Logo" width="200"/>
+
 # Dojo Backend API Documentation
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Go-1.21-blue?logo=go" alt="Go" />
+  <img src="https://img.shields.io/badge/Fiber-2.52.0-green?logo=fiber" alt="Fiber" />
+  <img src="https://img.shields.io/badge/PostgreSQL-15-blue?logo=postgresql" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/GORM-1.25.5-ff69b4?logo=go" alt="GORM" />
+  <img src="https://img.shields.io/badge/JWT-Auth-yellow?logo=jwt" alt="JWT" />
+  <img src="https://img.shields.io/badge/OAuth2-Google%20%7C%20GitHub-blueviolet?logo=oauth" alt="OAuth2" />
+  <img src="https://img.shields.io/badge/REST%20API-OpenAPI%20Style-orange?logo=swagger" alt="REST API" />
+</p>
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
@@ -7,8 +20,14 @@
 4. [Environment Setup](#environment-setup)
 5. [Authentication](#authentication)
 6. [API Modules](#api-modules)
-   - [Module 1: Auth API](#module-1-auth-api)
-   - [Module 2: User API](#module-2-user-api)
+  - [Module 1: Auth API](#module-1-auth-api)
+  - [Module 2: User API](#module-2-user-api)
+  - [Module 3: Problem API](#module-3-problem-api)
+  - [Module 4: Contest API](#module-4-contest-api)
+  - [Module 5: Sheet API](#module-5-sheet-api)
+  - [Module 6: Social API](#module-6-social-api)
+  - [Module 7: Room API](#module-7-room-api)
+  - [Module 8: WebSocket API](#module-8-websocket-api)
 7. [Error Handling](#error-handling)
 8. [Testing Guide](#testing-guide)
 
@@ -210,9 +229,23 @@ curl -X GET http://localhost:8080/api/users/profile \
 
 ---
 
+
 ## API Modules
 
-## Module 1: Auth API
+---
+
+### Route Legend
+| Method | Auth | Description |
+|--------|------|-------------|
+| `GET`  | 🔓/🔒 | Public/Protected |
+| `POST` | 🔓/🔒 | Public/Protected |
+| `PUT`  | 🔒   | Protected |
+| `PATCH`| 🔒   | Protected |
+| `DELETE`| 🔒  | Protected |
+
+
+
+## Module 1: Auth API ![Auth](https://img.shields.io/badge/Auth-JWT%20%7C%20OAuth2-yellow?logo=jwt)
 
 ### 1.1 Register (Email/Password)
 
@@ -473,7 +506,8 @@ Authorization: Bearer <access_token>
 
 ---
 
-## Module 2: User API
+
+## Module 2: User API ![User](https://img.shields.io/badge/User-Profile-blue?logo=account)
 
 **All User API endpoints require authentication.**
 
@@ -763,7 +797,139 @@ Authorization: Bearer <access_token>
 
 ---
 
-## Error Handling
+
+---
+
+## Module 3: Problem API ![Problems](https://img.shields.io/badge/Problems-CP%20Platforms-orange?logo=leetcode)
+
+### Routes
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET    | /api/problems | 🔒 | List/search problems (filters, pagination) |
+| POST   | /api/problems | 🔒 (admin) | Create a new problem |
+| POST   | /api/problems/sync | 🔒 | Sync problems from LeetCode/Codeforces |
+| GET    | /api/problems/solved/count | 🔒 | Get count of solved problems for user |
+| GET    | /api/problems/:id | 🔒 | Get problem by ID |
+| PUT    | /api/problems/:id | 🔒 (admin) | Update problem |
+| DELETE | /api/problems/:id | 🔒 (admin) | Delete problem |
+| POST   | /api/problems/:id/solve | 🔒 | Mark as solved/unsolved |
+
+#### Example: List Problems
+```bash
+GET /api/problems?page=1&limit=20&platform=leetcode&difficulty=easy
+Authorization: Bearer <token>
+```
+
+#### Example: Sync Problems
+```bash
+POST /api/problems/sync
+Authorization: Bearer <token>
+Content-Type: application/json
+{
+  "platform": "leetcode",
+  "limit": 100
+}
+```
+
+#### Example: Mark Problem as Solved
+```bash
+POST /api/problems/123/solve
+Authorization: Bearer <token>
+Content-Type: application/json
+{
+  "is_solved": true
+}
+```
+
+---
+
+## Module 4: Contest API ![Contest](https://img.shields.io/badge/Contest-CP%20Contests-blueviolet?logo=codeforces)
+
+### Routes
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET    | /api/contests | 🔓 | List all contests (public) |
+| GET    | /api/contests/:id | 🔓 | Get contest by ID |
+| POST   | /api/contests/sync | 🔒 | Sync contests from platforms |
+| POST   | /api/contests/reminders | 🔒 | Create contest reminder |
+| DELETE | /api/contests/reminders/:id | 🔒 | Delete contest reminder |
+
+#### Example: List Contests
+```bash
+GET /api/contests?platform=leetcode&upcoming=true
+```
+
+#### Example: Sync Contests
+```bash
+POST /api/contests/sync?platform=leetcode
+Authorization: Bearer <token>
+```
+
+---
+
+## Module 5: Sheet API ![Sheet](https://img.shields.io/badge/Sheet-Problem%20Sheets-yellowgreen?logo=notion)
+
+### Routes
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET    | /api/sheets/public | 🔒 | List public sheets |
+| GET    | /api/sheets | 🔒 | List user sheets |
+| POST   | /api/sheets | 🔒 | Create new sheet |
+| GET    | /api/sheets/:id | 🔒 | Get sheet by ID |
+| PUT    | /api/sheets/:id | 🔒 | Update sheet |
+| DELETE | /api/sheets/:id | 🔒 | Delete sheet |
+| POST   | /api/sheets/:id/problems | 🔒 | Add problem to sheet |
+| DELETE | /api/sheets/:id/problems/:problemId | 🔒 | Remove problem from sheet |
+| PATCH  | /api/sheets/:id/problems/:problemId | 🔒 | Update problem in sheet |
+
+---
+
+## Module 6: Social API ![Social](https://img.shields.io/badge/Social-Friends%20%7C%20Blocks-ff69b4?logo=people)
+
+### Routes
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST   | /api/social/friends/requests | 🔒 | Send friend request |
+| GET    | /api/social/friends/requests/received | 🔒 | Get received friend requests |
+| GET    | /api/social/friends/requests/sent | 🔒 | Get sent friend requests |
+| PATCH  | /api/social/friends/requests/:id | 🔒 | Respond to friend request |
+| DELETE | /api/social/friends/requests/:id | 🔒 | Cancel friend request |
+| GET    | /api/social/friends | 🔒 | List friends |
+| DELETE | /api/social/friends/:id | 🔒 | Remove friend |
+| POST   | /api/social/blocks | 🔒 | Block user |
+| GET    | /api/social/blocks | 🔒 | List blocked users |
+| DELETE | /api/social/blocks/:id | 🔒 | Unblock user |
+| GET    | /api/social/users/search | 🔒 | Search users |
+
+---
+
+## Module 7: Room API ![Room](https://img.shields.io/badge/Room-Collab%20Rooms-9cf?logo=google-meet)
+
+### Routes
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST   | /api/rooms | 🔒 | Create room |
+| GET    | /api/rooms | 🔒 | List user rooms |
+| POST   | /api/rooms/join | 🔒 | Join room |
+| GET    | /api/rooms/:id | 🔒 | Get room by ID |
+| POST   | /api/rooms/:id/leave | 🔒 | Leave room |
+| DELETE | /api/rooms/:id | 🔒 | Delete room |
+| GET    | /api/rooms/:id/code | 🔒 | Get code session |
+| PUT    | /api/rooms/:id/code | 🔒 | Update code session |
+| GET    | /api/rooms/:id/ws | 🔒 | WebSocket for real-time collaboration |
+
+---
+
+## Module 8: WebSocket API ![WebSocket](https://img.shields.io/badge/WebSocket-Real%20Time-4caf50?logo=websocket)
+
+### Features
+- Real-time code sync
+- Collaborative whiteboard
+- Video chat signaling
+- Live cursor positions
+
+---
 
 ### Standard Error Response Format
 
@@ -1032,6 +1198,6 @@ Backend/
 
 ---
 
-**Last Updated:** January 24, 2026  
-**Version:** 1.0.0  
-**Status:** Modules 1 & 2 Complete
+**Last Updated:** February 10, 2026  
+**Version:** 1.1.0  
+**Status:** All Core Modules Complete 🚀
