@@ -99,6 +99,19 @@ export default function PlatformSettings() {
       setError('');
       setSyncResults({});
       
+      // Check if username is actually saved in the backend
+      const savedProfile = await authService.getMe();
+      const savedUsername = platform === 'leetcode' ? savedProfile.profile?.leetcode_username :
+                            platform === 'codeforces' ? savedProfile.profile?.codeforces_username :
+                            platform === 'codechef' ? savedProfile.profile?.codechef_username :
+                            savedProfile.profile?.gfg_username;
+      
+      if (!savedUsername) {
+        setError(`Please save your ${platform.toUpperCase()} username first before syncing`);
+        setIsSyncing(null);
+        return;
+      }
+      
       console.log(`Syncing platform: ${platform}`);
       console.log(`Current usernames:`, usernames);
       const result = await profileService.syncPlatformStats([platform]);
