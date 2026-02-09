@@ -16,6 +16,7 @@ interface Problem {
   constraints?: string;
   examples?: any;
   hints?: any;
+  is_solved?: boolean;
   created_at?: string;
 }
 
@@ -105,6 +106,44 @@ class ProblemsService {
       return response.data.data;
     } catch (error) {
       return null;
+    }
+  }
+
+  /**
+   * Sync problems from external platforms
+   */
+  async syncProblems(platform: 'leetcode' | 'codeforces', limit: number = 100): Promise<{imported: number}> {
+    const response = await axios.post(
+      `${API_URL}/problems/sync`,
+      { platform, limit },
+      { headers: this.getHeaders() }
+    );
+    return response.data.data;
+  }
+
+  /**
+   * Mark a problem as solved or unsolved
+   */
+  async markProblemSolved(problemId: string, isSolved: boolean): Promise<void> {
+    await axios.post(
+      `${API_URL}/problems/${problemId}/solve`,
+      { is_solved: isSolved },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * Get the count of problems solved by the current user
+   */
+  async getSolvedCount(): Promise<number> {
+    try {
+      const response = await axios.get(`${API_URL}/problems/solved/count`, {
+        headers: this.getHeaders(),
+      });
+      return response.data.data.count || 0;
+    } catch (error) {
+      console.error('Failed to fetch solved count:', error);
+      return 0;
     }
   }
 }

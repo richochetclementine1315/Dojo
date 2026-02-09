@@ -24,6 +24,7 @@ export default function Dashboard() {
   const { user } = useAuthStore();
   const [recentProblems, setRecentProblems] = useState<Problem[]>([]);
   const [upcomingContests, setUpcomingContests] = useState<Contest[]>([]);
+  const [solvedCount, setSolvedCount] = useState<number>(0);
 
   useEffect(() => {
     fetchDashboardData();
@@ -31,16 +32,19 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [problems, contests] = await Promise.all([
+      const [problems, contests, solved] = await Promise.all([
         problemService.getProblems({ page: 1, limit: 5 }),
         contestService.getContests({ upcoming: true }),
+        problemService.getSolvedCount(),
       ]);
       setRecentProblems(Array.isArray(problems) ? problems : []);
       setUpcomingContests(Array.isArray(contests) ? contests.slice(0, 3) : []);
+      setSolvedCount(solved);
     } catch (err) {
       console.error('Failed to fetch dashboard data:', err);
       setRecentProblems([]);
       setUpcomingContests([]);
+      setSolvedCount(0);
     }
   };
 
@@ -109,8 +113,10 @@ export default function Dashboard() {
               <Target className="h-4 w-4 text-dojo-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-white">0</div>
-              <p className="text-xs text-gray-500 mt-1">Start solving problems</p>
+              <div className="text-3xl font-bold text-white">{solvedCount}</div>
+              <p className="text-xs text-gray-500 mt-1">
+                {solvedCount === 0 ? 'Start solving problems' : 'Keep going!'}
+              </p>
             </CardContent>
           </Card>
 

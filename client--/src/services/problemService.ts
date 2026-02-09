@@ -44,4 +44,14 @@ export const problemService = {
     const response = await api.delete<ApiResponse<void>>(`/problems/${id}`);
     return response.data;
   },
+
+  async getSolvedCount() {
+    try {
+      const response = await api.get<ApiResponse<{ count: number }>>('/problems/solved/count');
+      return response.data.data.count;
+    } catch (error) {
+      console.error('Failed to fetch solved count:', error);
+      return 0;
+    }
+  },
 };

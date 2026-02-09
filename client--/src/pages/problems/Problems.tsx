@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { problemsService, type Problem, type ProblemFilters } from '@/services/problemsService';
-import { Loader2, ExternalLink, ChevronLeft, ChevronRight, Code2, Search } from 'lucide-react';
+import { Loader2, ExternalLink, ChevronLeft, ChevronRight, Code2, Search, RefreshCw, CheckCircle2, Circle } from 'lucide-react';
 import Antigravity from '@/components/effects/Antigravity';
 
 export default function Problems() {
@@ -17,6 +17,8 @@ export default function Problems() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<'All' | 'easy' | 'medium' | 'hard'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [authError, setAuthError] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncSuccess, setSyncSuccess] = useState('');
   
   const pageSize = 20;
 
@@ -56,6 +58,32 @@ export default function Problems() {
     e.preventDefault();
     setCurrentPage(1);
     fetchProblems();
+  };
+
+  const handleSyncProblems = async (platform: 'leetcode' | 'codeforces') => {
+    try {
+      setIsSyncing(true);
+      const result = await problemsService.syncProblems(platform, 100);
+      setSyncSuccess(`Successfully synced ${result.imported} ${platform} problems!`);
+      setTimeout(() => setSyncSuccess(''), 3000);
+      fetchProblems(); // Refresh the list
+    } catch (err: any) {
+      console.error('Failed to sync problems:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleMarkSolved = async (problemId: string, currentlymark: boolean) => {
+    try {
+      await problemsService.markProblemSolved(problemId, !currentlymark);
+      // Update local state
+      setProblems(problems.map(p => 
+        p.id === problemId ? { ...p, is_solved: !currentlymark } : p
+      ));
+    } catch (err: any) {
+      console.error('Failed to mark problem:', err);
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -180,7 +208,41 @@ export default function Problems() {
               ))}
             </div>
           </div>
+
+          {/* Sync Buttons */}
+          <div>
+            <label className="text-xs md:text-sm text-gray-400 mb-2 block">Sync Problems</label>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleSyncProblems('leetcode')}
+                disabled={isSyncing}
+                className="rounded-full gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                LeetCode
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleSyncProblems('codeforces')}
+                disabled={isSyncing}
+                className="rounded-full gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                Codeforces
+              </Button>
+            </div>
+          </div>
         </div>
+
+        {/* Sync Success Message */}
+        {syncSuccess && (
+          <div className="bg-green-500/10 border border-green-500/50 text-green-500 px-4 py-2 rounded-lg mb-4">
+            {syncSuccess}
+          </div>
+        )}
 
         {/* Problems List */}
         {authError ? (
@@ -207,6 +269,17 @@ export default function Problems() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
                       <div className="flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <button
+                            onClick={() => handleMarkSolved(problem.id, problem.is_solved || false)}
+                            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                            title={problem.is_solved ? 'Mark as unsolved' : 'Mark as solved'}
+                          >
+                            {problem.is_solved ? (
+                              <CheckCircle2 className="h-5 w-5 text-green-500" />
+                            ) : (
+                              <Circle className="h-5 w-5 text-gray-500" />
+                            )}
+                          </button>
                           <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium border ${getPlatformColor(problem.platform)}`}>
                             {problem.platform === 'gfg' ? 'GFG' : problem.platform.charAt(0).toUpperCase() + problem.platform.slice(1)}
                           </span>

@@ -50,6 +50,7 @@ func main() {
 		&models.ProblemSheet{},
 		&models.SheetProblem{},
 		&models.UserNote{},
+		&models.UserProblemProgress{},
 		&models.Contest{},
 		&models.ContestReminder{},
 		&models.Room{},

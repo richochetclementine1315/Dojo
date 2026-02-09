@@ -4,9 +4,14 @@ import (
 	"dojo/internal/dto"
 	"dojo/internal/models"
 	"dojo/internal/repository"
+	"dojo/internal/service/scrapper"
 	"dojo/internal/utils"
 	"errors"
+	"fmt"
+	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
@@ -66,7 +71,7 @@ func (s *ProblemService) GetProblemByID(id string) (*dto.ProblemResponse, error)
 }
 
 // ListProblems retrieves all the problems with filtersss and paginationssss :)
-func (s *ProblemService) ListProblems(filters *dto.ProblemFilterRequest) ([]dto.ProblemResponse, int64, error) {
+func (s *ProblemService) ListProblems(filters *dto.ProblemFilterRequest, userID string) ([]dto.ProblemResponse, int64, error) {
 	// Default pagination
 	if filters.Page < 1 {
 		filters.Page = 1
@@ -94,9 +99,25 @@ func (s *ProblemService) ListProblems(filters *dto.ProblemFilterRequest) ([]dto.
 		return nil, 0, err
 	}
 
+	// Get user's solved problems
+	var userUUID uuid.UUID
+	solvedMap := make(map[uuid.UUID]bool)
+	if userID != "" {
+		userUUID, err = uuid.Parse(userID)
+		if err == nil {
+			var progressList []models.UserProblemProgress
+			s.problemRepo.GetDB().Where("user_id = ? AND is_solved = ?", userUUID, true).Find(&progressList)
+			for _, p := range progressList {
+				solvedMap[p.ProblemID] = true
+			}
+		}
+	}
+
 	responses := make([]dto.ProblemResponse, len(problems))
 	for i, problem := range problems {
-		responses[i] = *s.mapProblemToResponse(&problem)
+		response := s.mapProblemToResponse(&problem)
+		response.IsSolved = solvedMap[problem.ID]
+		responses[i] = *response
 	}
 
 	return responses, total, nil
@@ -178,4 +199,177 @@ func (s *ProblemService) mapProblemToResponse(problem *models.Problem) *dto.Prob
 		Hints:             problem.Hints,
 		CreatedAt:         problem.CreatedAt,
 	}
+}
+
+// SyncProblems imports problems from external platforms
+func (s *ProblemService) SyncProblems(platform string, limit int) (int, error) {
+	imported := 0
+
+	switch strings.ToLower(platform) {
+	case "leetcode":
+		problems, _, err := scrapper.FetchLeetCodeProblems(limit, 0)
+		if err != nil {
+			return 0, fmt.Errorf("failed to fetch LeetCode problems: %w", err)
+		}
+
+		for _, p := range problems {
+			// Skip paid-only problems
+			if p.IsPaidOnly {
+				continue
+			}
+
+			// Check if problem already exists
+			exists, err := s.problemRepo.ExistsByPlatformID("leetcode", p.QuestionFrontendID)
+			if err != nil {
+				continue
+			}
+			if exists {
+				continue
+			}
+
+			// Extract tags
+			tags := make([]string, len(p.TopicTags))
+			for i, tag := range p.TopicTags {
+				tags[i] = tag.Name
+			}
+
+			// Map difficulty to lowercase
+			difficulty := strings.ToLower(p.Difficulty)
+
+			// Create problem
+			problem := &models.Problem{
+				Platform:          "leetcode",
+				PlatformProblemID: p.QuestionFrontendID,
+				Title:             p.Title,
+				Slug:              p.TitleSlug,
+				Difficulty:        difficulty,
+				Tags:              pq.StringArray(tags),
+				AcceptanceRate:    p.AcRate,
+				ProblemURL:        fmt.Sprintf("https://leetcode.com/problems/%s/", p.TitleSlug),
+			}
+
+			if err := s.problemRepo.Create(problem); err != nil {
+				continue
+			}
+			imported++
+		}
+
+	case "codeforces":
+		problems, err := scrapper.FetchCodeforcesProblems()
+		if err != nil {
+			return 0, fmt.Errorf("failed to fetch Codeforces problems: %w", err)
+		}
+
+		// Limit the number of problems
+		if limit > 0 && len(problems) > limit {
+			problems = problems[:limit]
+		}
+
+		for _, p := range problems {
+			platformID := fmt.Sprintf("%d%s", p.ContestID, p.Index)
+
+			// Check if problem already exists
+			exists, err := s.problemRepo.ExistsByPlatformID("codeforces", platformID)
+			if err != nil {
+				continue
+			}
+			if exists {
+				continue
+			}
+
+			// Map rating to difficulty
+			difficulty := "medium"
+			if p.Rating > 0 {
+				if p.Rating < 1200 {
+					difficulty = "easy"
+				} else if p.Rating >= 1900 {
+					difficulty = "hard"
+				}
+			}
+
+			problem := &models.Problem{
+				Platform:          "codeforces",
+				PlatformProblemID: platformID,
+				Title:             p.Name,
+				Slug:              fmt.Sprintf("%d-%s", p.ContestID, strings.ToLower(p.Index)),
+				Difficulty:        difficulty,
+				Tags:              pq.StringArray(p.Tags),
+				AcceptanceRate:    0,
+				ProblemURL:        fmt.Sprintf("https://codeforces.com/problemset/problem/%d/%s", p.ContestID, p.Index),
+			}
+
+			if err := s.problemRepo.Create(problem); err != nil {
+				continue
+			}
+			imported++
+		}
+
+	default:
+		return 0, fmt.Errorf("unsupported platform: %s", platform)
+	}
+
+	return imported, nil
+}
+
+// MarkProblemSolved marks a problem as solved for a user
+func (s *ProblemService) MarkProblemSolved(userID, problemID string, isSolved bool) error {
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return fmt.Errorf("invalid user ID: %w", err)
+	}
+
+	problemUUID, err := uuid.Parse(problemID)
+	if err != nil {
+		return fmt.Errorf("invalid problem ID: %w", err)
+	}
+
+	// Check if progress record exists
+	var progress models.UserProblemProgress
+	result := s.problemRepo.GetDB().Where("user_id = ? AND problem_id = ?", userUUID, problemUUID).First(&progress)
+
+	now := time.Now()
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			// Create new progress record
+			progress = models.UserProblemProgress{
+				UserID:    userUUID,
+				ProblemID: problemUUID,
+				IsSolved:  isSolved,
+				Attempts:  1,
+			}
+			if isSolved {
+				progress.SolvedAt = &now
+			}
+			progress.LastAttempt = &now
+
+			return s.problemRepo.GetDB().Create(&progress).Error
+		}
+		return result.Error
+	}
+
+	// Update existing progress
+	progress.IsSolved = isSolved
+	progress.Attempts++
+	progress.LastAttempt = &now
+	if isSolved && progress.SolvedAt == nil {
+		progress.SolvedAt = &now
+	}
+
+	return s.problemRepo.GetDB().Save(&progress).Error
+}
+
+// GetUserSolvedCount returns the count of solved problems for a user
+func (s *ProblemService) GetUserSolvedCount(userID string) (int64, error) {
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return 0, fmt.Errorf("invalid user ID: %w", err)
+	}
+
+	var count int64
+	err = s.problemRepo.GetDB().Model(&models.UserProblemProgress{}).
+		Where("user_id = ? AND is_solved = ?", userUUID, true).
+		Count(&count).Error
+
+	return count, err
 }

@@ -58,9 +58,12 @@ func SetupRoutes(app *fiber.App, handlers *Handlers, cfg *config.Config) {
 		{
 			problemRoutes.Get("", handlers.Problem.ListProblems)
 			problemRoutes.Post("", handlers.Problem.CreateProblem)
+			problemRoutes.Post("/sync", handlers.Problem.SyncProblems)
+			problemRoutes.Get("/solved/count", handlers.Problem.GetUserSolvedCount)
 			problemRoutes.Get("/:id", handlers.Problem.GetProblem)
 			problemRoutes.Put("/:id", handlers.Problem.UpdateProblem)
 			problemRoutes.Delete("/:id", handlers.Problem.DeleteProblem)
+			problemRoutes.Post("/:id/solve", handlers.Problem.MarkProblemSolved)
 		}
 		// Protected Contest Routes (sync and reminders require auth)
 		protectedContestRoutes := protected.Group("/contests")

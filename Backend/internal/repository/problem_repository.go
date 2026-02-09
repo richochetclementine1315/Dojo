@@ -82,3 +82,17 @@ func (r *ProblemRepository) ExistsByURL(url string) (bool, error) {
 	err := r.db.Model(&models.Problem{}).Where("problem_url = ?", url).Count(&count).Error
 	return count > 0, err
 }
+
+// ExistsByPlatformID checks if a problem exists with the given platform and platform ID
+func (r *ProblemRepository) ExistsByPlatformID(platform, platformID string) (bool, error) {
+	var count int64
+	err := r.db.Model(&models.Problem{}).
+		Where("platform = ? AND platform_problem_id = ?", platform, platformID).
+		Count(&count).Error
+	return count > 0, err
+}
+
+// GetDB returns the underlying database connection
+func (r *ProblemRepository) GetDB() *gorm.DB {
+	return r.db
+}

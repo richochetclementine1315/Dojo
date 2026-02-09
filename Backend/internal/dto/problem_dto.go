@@ -22,6 +22,7 @@ type ProblemResponse struct {
 	Constraints       string          `json:"constraints"`
 	Examples          json.RawMessage `json:"examples"`
 	Hints             json.RawMessage `json:"hints"`
+	IsSolved          bool            `json:"is_solved"`
 	CreatedAt         time.Time       `json:"created_at"`
 }
 type ProblemFilterRequest struct {

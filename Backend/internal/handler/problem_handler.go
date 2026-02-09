@@ -2,10 +2,12 @@ package handler
 
 import (
 	"dojo/internal/dto"
+	"dojo/internal/middleware"
 	"dojo/internal/service"
 	"dojo/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type ProblemHandler struct {
@@ -65,7 +67,14 @@ func (h *ProblemHandler) ListProblems(c *fiber.Ctx) error {
 		return utils.SendBadRequest(c, "Invalid query parameters", err)
 	}
 
-	problems, total, err := h.problemService.ListProblems(&filters)
+	// Get user ID if authenticated (optional)
+	userID, _ := middleware.GetUserID(c)
+	var userIDStr string
+	if userID != uuid.Nil {
+		userIDStr = userID.String()
+	}
+
+	problems, total, err := h.problemService.ListProblems(&filters, userIDStr)
 	if err != nil {
 		return utils.SendInternalError(c, "Failed to fetch problems", err)
 	}
@@ -116,4 +125,83 @@ func (h *ProblemHandler) DeleteProblem(c *fiber.Ctx) error {
 	}
 
 	return utils.SendSuccess(c, fiber.StatusOK, "Problem deleted successfully", nil)
+}
+
+// SyncProblems - POST /api/problems/sync
+// Syncs problems from external platforms
+func (h *ProblemHandler) SyncProblems(c *fiber.Ctx) error {
+	var req struct {
+		Platform string `json:"platform" validate:"required,oneof=leetcode codeforces"`
+		Limit    int    `json:"limit"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return utils.SendBadRequest(c, "Invalid request body", err)
+	}
+
+	if err := utils.ValidateStruct(&req); err != nil {
+		return utils.SendBadRequest(c, "Validation failed", err)
+	}
+
+	if req.Limit <= 0 {
+		req.Limit = 100 // Default limit
+	}
+
+	count, err := h.problemService.SyncProblems(req.Platform, req.Limit)
+	if err != nil {
+		return utils.SendInternalError(c, "Failed to sync problems", err)
+	}
+
+	return utils.SendSuccess(c, fiber.StatusOK, "Problems synced successfully", fiber.Map{
+		"imported": count,
+		"platform": req.Platform,
+	})
+}
+
+// MarkProblemSolved - POST /api/problems/:id/solve
+// Marks a problem as solved or unsolved for the authenticated user
+func (h *ProblemHandler) MarkProblemSolved(c *fiber.Ctx) error {
+	problemID := c.Params("id")
+
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		return utils.SendError(c, fiber.StatusUnauthorized, "Unauthorized", err)
+	}
+
+	var req struct {
+		IsSolved bool `json:"is_solved"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return utils.SendBadRequest(c, "Invalid request body", err)
+	}
+
+	if err := h.problemService.MarkProblemSolved(userID.String(), problemID, req.IsSolved); err != nil {
+		return utils.SendInternalError(c, "Failed to update problem status", err)
+	}
+
+	message := "Problem marked as solved"
+	if !req.IsSolved {
+		message = "Problem marked as unsolved"
+	}
+
+	return utils.SendSuccess(c, fiber.StatusOK, message, nil)
+}
+
+// GetUserSolvedCount - GET /api/problems/solved/count
+// Returns the count of problems solved by the authenticated user
+func (h *ProblemHandler) GetUserSolvedCount(c *fiber.Ctx) error {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		return utils.SendError(c, fiber.StatusUnauthorized, "Unauthorized", err)
+	}
+
+	count, err := h.problemService.GetUserSolvedCount(userID.String())
+	if err != nil {
+		return utils.SendInternalError(c, "Failed to get solved count", err)
+	}
+
+	return utils.SendSuccess(c, fiber.StatusOK, "Solved count retrieved successfully", fiber.Map{
+		"count": count,
+	})
 }
