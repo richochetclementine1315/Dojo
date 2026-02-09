@@ -96,8 +96,10 @@ export default function PlatformSettings() {
       setSyncResults({});
       
       console.log(`Syncing platform: ${platform}`);
+      console.log(`Current usernames:`, usernames);
       const result = await profileService.syncPlatformStats([platform]);
-      console.log(`Sync result for ${platform}:`, result);
+      console.log(`Sync result for ${platform}:`, JSON.stringify(result, null, 2));
+      console.log(`Platform result:`, result[platform]);
       setSyncResults(result);
       
       // Show success/error for this platform
@@ -105,10 +107,12 @@ export default function PlatformSettings() {
         setSuccess(`${platform.toUpperCase()} stats synced successfully!`);
         setTimeout(() => setSuccess(''), 3000);
       } else if (result[platform]?.error) {
+        console.error(`Sync error for ${platform}:`, result[platform].error);
         setError(`${platform.toUpperCase()}: ${result[platform].error}`);
       }
     } catch (err: any) {
       console.error(`Failed to sync ${platform}:`, err);
+      console.error(`Error details:`, err.response?.data);
       setError(err.response?.data?.message || `Failed to sync ${platform} stats`);
     } finally {
       setIsSyncing(null);
