@@ -38,12 +38,19 @@ export default function Problems() {
       if (selectedDifficulty !== 'All') filters.difficulty = selectedDifficulty;
       if (searchQuery) filters.search = searchQuery;
       
+      console.log('Fetching problems with filters:', filters);
       const data = await problemsService.getProblems(filters);
+      console.log('Problems fetched successfully:', data);
       setProblems(data.problems);
       setTotalProblems(data.total);
       setHasMore(data.hasMore);
     } catch (err: any) {
-      if (err.message === 'AUTHENTICATION_REQUIRED') {
+      console.error('Failed to fetch problems:', err);
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
+      
+      if (err.response?.status === 401 || err.message === 'AUTHENTICATION_REQUIRED') {
+        console.error('Authentication error - user not logged in');
         setAuthError(true);
       }
       setProblems([]);

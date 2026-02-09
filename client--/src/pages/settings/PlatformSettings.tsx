@@ -68,12 +68,16 @@ export default function PlatformSettings() {
       setError('');
       setSuccess('');
       
+      console.log('Saving platform usernames:', usernames);
       await profileService.updateProfile({
         bio: '',
         location: '',
         website: '',
         ...usernames,
       });
+      
+      // Refresh profile to get updated data
+      await fetchProfile();
       
       setSuccess('Platform usernames saved successfully!');
       setTimeout(() => setSuccess(''), 3000);
