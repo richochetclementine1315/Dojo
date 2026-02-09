@@ -48,16 +48,12 @@ export default function PlatformSettings() {
     try {
       setIsLoading(true);
       const data = await authService.getMe();
-      console.log('Fetched profile data:', data);
-      console.log('Profile object:', data.profile);
-      const fetchedUsernames = {
+      setUsernames({
         leetcode_username: data.profile?.leetcode_username || data.leetcode_username || '',
         codeforces_username: data.profile?.codeforces_username || data.codeforces_username || '',
         codechef_username: data.profile?.codechef_username || data.codechef_username || '',
         gfg_username: data.profile?.gfg_username || data.gfg_username || '',
-      };
-      console.log('Setting usernames to:', fetchedUsernames);
-      setUsernames(fetchedUsernames);
+      });
     } catch (err: any) {
       console.error('Failed to fetch profile:', err);
       setError('Failed to load profile');
@@ -72,7 +68,6 @@ export default function PlatformSettings() {
       setError('');
       setSuccess('');
       
-      console.log('Saving platform usernames:', usernames);
       await profileService.updateProfile({
         bio: '',
         location: '',
@@ -112,11 +107,7 @@ export default function PlatformSettings() {
         return;
       }
       
-      console.log(`Syncing platform: ${platform}`);
-      console.log(`Current usernames:`, usernames);
       const result = await profileService.syncPlatformStats([platform]);
-      console.log(`Sync result for ${platform}:`, JSON.stringify(result, null, 2));
-      console.log(`Platform result:`, result[platform]);
       setSyncResults(result);
       
       // Show success/error for this platform
@@ -124,12 +115,9 @@ export default function PlatformSettings() {
         setSuccess(`${platform.toUpperCase()} stats synced successfully!`);
         setTimeout(() => setSuccess(''), 3000);
       } else if (result[platform]?.error) {
-        console.error(`Sync error for ${platform}:`, result[platform].error);
         setError(`${platform.toUpperCase()}: ${result[platform].error}`);
       }
     } catch (err: any) {
-      console.error(`Failed to sync ${platform}:`, err);
-      console.error(`Error details:`, err.response?.data);
       setError(err.response?.data?.message || `Failed to sync ${platform} stats`);
     } finally {
       setIsSyncing(null);

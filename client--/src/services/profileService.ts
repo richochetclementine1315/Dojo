@@ -5,9 +5,7 @@ export const profileService = {
   async getProfileStats() {
     // Profile stats are included in the profile endpoint
     const response = await api.get<ApiResponse<any>>('/users/profile');
-    console.log('Raw profile response:', response.data);
     const platformStats = response.data.data?.profile?.platform_stats || [];
-    console.log('Platform stats array:', platformStats);
     
     // Transform array of platform stats to object keyed by platform
     const stats: UserProfileStats = {
@@ -77,9 +75,7 @@ export const profileService = {
     codechef_username?: string;
     gfg_username?: string;
   }) {
-    console.log('Updating profile with data:', data);
     const response = await api.put<ApiResponse<any>>('/users/profile', data);
-    console.log('Profile update response:', response.data);
     return response.data.data;
   },
 
