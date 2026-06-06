@@ -47,11 +47,11 @@ const (
 // message struct represents a websocket message
 type Message struct {
 	Type      MessageType     `json:"type"`
-	RoomID    uuid.UUID       `json: "room_id"`
-	UserID    uuid.UUID       `json: "user_id"`
-	Username  string          `json: "username"`
-	Data      json.RawMessage `json: "data"`
-	Timestamp time.Time       `json: "timestamp"`
+	RoomID    uuid.UUID       `json:"room_id"`
+	UserID    uuid.UUID       `json:"user_id"`
+	Username  string          `json:"username"`
+	Data      json.RawMessage `json:"data"`
+	Timestamp time.Time       `json:"timestamp"`
 }
 
 // CodeUpdateData represents the code editor update data
