@@ -11,6 +11,8 @@ interface Problem {
   slug?: string;
   tags: string[];
   acceptance_rate?: number;
+  cf_rating?: number;
+  solved_count?: number;
   problem_url: string;
   description?: string;
   constraints?: string;
@@ -18,6 +20,18 @@ interface Problem {
   hints?: any;
   is_solved?: boolean;
   created_at?: string;
+}
+
+// A Codeforces problem returned by the live browse endpoint (not stored in DB)
+interface CFProblem {
+  contest_id: number;
+  index: string;
+  name: string;
+  type: string;
+  rating: number;
+  tags: string[];
+  solved_count: number;
+  problem_url: string;
 }
 
 interface ProblemFilters {
@@ -29,12 +43,29 @@ interface ProblemFilters {
   limit?: number;
 }
 
+interface CFProblemsFilters {
+  tags?: string[];
+  min_rating?: number;
+  max_rating?: number;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
 interface ProblemsResponse {
   problems: Problem[];
   total: number;
   page: number;
   limit: number;
   hasMore: boolean;
+}
+
+interface CFProblemsResponse {
+  problems: CFProblem[];
+  total: number;
+  page: number;
+  limit: number;
+  has_more: boolean;
 }
 
 class ProblemsService {
@@ -80,19 +111,35 @@ class ProblemsService {
         hasMore: page * limit < total,
       };
     } catch (error: any) {
-      // Check if it's an authentication error
       if (error.response?.status === 401) {
         throw new Error('AUTHENTICATION_REQUIRED');
       }
-      
-      return {
-        problems: [],
-        total: 0,
-        page: 1,
-        limit: 20,
-        hasMore: false,
-      };
+      return { problems: [], total: 0, page: 1, limit: 20, hasMore: false };
     }
+  }
+
+  /**
+   * Fetch Codeforces problems live from the CF API (cached 6h on backend).
+   * Supports tag, rating range, and text search filters.
+   */
+  async getCodeforcesProblems(filters: CFProblemsFilters = {}): Promise<CFProblemsResponse> {
+    const params = new URLSearchParams();
+
+    if (filters.search) params.append('search', filters.search);
+    if (filters.min_rating) params.append('min_rating', filters.min_rating.toString());
+    if (filters.max_rating) params.append('max_rating', filters.max_rating.toString());
+    if (filters.page) params.append('page', filters.page.toString());
+    if (filters.limit) params.append('limit', filters.limit.toString());
+    if (filters.tags && filters.tags.length > 0) {
+      filters.tags.forEach(tag => params.append('tags', tag));
+    }
+
+    const response = await axios.get(
+      `${API_URL}/problems/codeforces/browse?${params.toString()}`,
+      { headers: this.getHeaders() }
+    );
+
+    return response.data.data as CFProblemsResponse;
   }
 
   /**
@@ -110,7 +157,7 @@ class ProblemsService {
   }
 
   /**
-   * Sync problems from external platforms
+   * Sync problems from external platforms (imports into DB)
    */
   async syncProblems(platform: 'leetcode' | 'codeforces', limit: number = 100): Promise<{imported: number}> {
     const response = await axios.post(
@@ -149,4 +196,4 @@ class ProblemsService {
 }
 
 export const problemsService = new ProblemsService();
-export type { Problem, ProblemFilters, ProblemsResponse };
+export type { Problem, CFProblem, ProblemFilters, CFProblemsFilters, ProblemsResponse, CFProblemsResponse };

@@ -19,6 +19,8 @@ type Problem struct {
 	Difficulty        string          `gorm:"type:varchar(20);index" json:"difficulty"` // 'easy', 'medium', 'hard'
 	Tags              pq.StringArray  `gorm:"type:text[]" json:"tags"`                  // PostgreSQL array
 	AcceptanceRate    float64         `json:"acceptance_rate"`
+	CFRating          int             `gorm:"column:cf_rating;default:0" json:"cf_rating"`       // Codeforces problem rating (0 if not CF)
+	SolvedCount       int             `gorm:"column:solved_count;default:0" json:"solved_count"` // Number of AC submissions
 	ProblemURL        string          `gorm:"type:text" json:"problem_url"`
 	Description       string          `gorm:"type:text" json:"description"`
 	Constraints       string          `gorm:"type:text" json:"constraints"`

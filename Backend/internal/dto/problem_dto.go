@@ -17,6 +17,8 @@ type ProblemResponse struct {
 	Difficulty        string          `json:"difficulty"`
 	Tags              []string        `json:"tags"`
 	AcceptanceRate    float64         `json:"acceptance_rate"`
+	CFRating          int             `json:"cf_rating"`    // Codeforces rating (0 if not CF)
+	SolvedCount       int             `json:"solved_count"` // Number of AC submissions on CF
 	ProblemURL        string          `json:"problem_url"`
 	Description       string          `json:"description"`
 	Constraints       string          `json:"constraints"`
@@ -24,6 +26,37 @@ type ProblemResponse struct {
 	Hints             json.RawMessage `json:"hints"`
 	IsSolved          bool            `json:"is_solved"`
 	CreatedAt         time.Time       `json:"created_at"`
+}
+
+// CFProblem represents a Codeforces problem fetched directly from the CF API (not stored in DB)
+type CFProblem struct {
+	ContestID   int      `json:"contest_id"`
+	Index       string   `json:"index"`
+	Name        string   `json:"name"`
+	Type        string   `json:"type"`
+	Rating      int      `json:"rating"`
+	Tags        []string `json:"tags"`
+	SolvedCount int      `json:"solved_count"`
+	ProblemURL  string   `json:"problem_url"`
+}
+
+// CFProblemsResponse is returned by the live CF fetch endpoint
+type CFProblemsResponse struct {
+	Problems []CFProblem `json:"problems"`
+	Total    int         `json:"total"`
+	Page     int         `json:"page"`
+	Limit    int         `json:"limit"`
+	HasMore  bool        `json:"has_more"`
+}
+
+// CFProblemsFilterRequest are query params for the live CF problems endpoint
+type CFProblemsFilterRequest struct {
+	Tags      []string `query:"tags"`
+	MinRating int      `query:"min_rating"`
+	MaxRating int      `query:"max_rating"`
+	Search    string   `query:"search"`
+	Page      int      `query:"page"`
+	Limit     int      `query:"limit"`
 }
 type ProblemFilterRequest struct {
 	Platform   string   `query:"platform" validate:"omitempty,oneof=leetcode codeforces codechef gfg"`

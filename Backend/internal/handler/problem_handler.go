@@ -188,6 +188,24 @@ func (h *ProblemHandler) MarkProblemSolved(c *fiber.Ctx) error {
 	return utils.SendSuccess(c, fiber.StatusOK, message, nil)
 }
 
+// GetCodeforcesProblems - GET /api/problems/codeforces/browse
+// Fetches problems directly from the Codeforces API with optional filters.
+// Results are served from an in-memory cache (refreshed every 6 hours).
+// Query params: tags (repeatable), min_rating, max_rating, search, page, limit
+func (h *ProblemHandler) GetCodeforcesProblems(c *fiber.Ctx) error {
+	var filters dto.CFProblemsFilterRequest
+	if err := c.QueryParser(&filters); err != nil {
+		return utils.SendBadRequest(c, "Invalid query parameters", err)
+	}
+
+	result, err := h.problemService.GetCodeforcesProblems(&filters)
+	if err != nil {
+		return utils.SendInternalError(c, "Failed to fetch Codeforces problems", err)
+	}
+
+	return utils.SendSuccess(c, fiber.StatusOK, "Codeforces problems retrieved successfully", result)
+}
+
 // GetUserSolvedCount - GET /api/problems/solved/count
 // Returns the count of problems solved by the authenticated user
 func (h *ProblemHandler) GetUserSolvedCount(c *fiber.Ctx) error {

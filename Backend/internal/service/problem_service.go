@@ -192,6 +192,8 @@ func (s *ProblemService) mapProblemToResponse(problem *models.Problem) *dto.Prob
 		Difficulty:        problem.Difficulty,
 		Tags:              []string(problem.Tags),
 		AcceptanceRate:    problem.AcceptanceRate,
+		CFRating:          problem.CFRating,
+		SolvedCount:       problem.SolvedCount,
 		ProblemURL:        problem.ProblemURL,
 		Description:       problem.Description,
 		Constraints:       problem.Constraints,
@@ -277,7 +279,7 @@ func (s *ProblemService) SyncProblems(platform string, limit int) (int, error) {
 				continue
 			}
 
-			// Map rating to difficulty
+			// Map CF rating to difficulty bucket
 			difficulty := "medium"
 			if p.Rating > 0 {
 				if p.Rating < 1200 {
@@ -295,6 +297,8 @@ func (s *ProblemService) SyncProblems(platform string, limit int) (int, error) {
 				Difficulty:        difficulty,
 				Tags:              pq.StringArray(p.Tags),
 				AcceptanceRate:    0,
+				CFRating:          p.Rating,
+				SolvedCount:       p.SolvedCount,
 				ProblemURL:        fmt.Sprintf("https://codeforces.com/problemset/problem/%d/%s", p.ContestID, p.Index),
 			}
 
@@ -357,6 +361,55 @@ func (s *ProblemService) MarkProblemSolved(userID, problemID string, isSolved bo
 	}
 
 	return s.problemRepo.GetDB().Save(&progress).Error
+}
+
+// GetCodeforcesProblems fetches problems live from the Codeforces API with filters and pagination.
+// This does NOT hit the database — it proxies/caches the CF API response.
+func (s *ProblemService) GetCodeforcesProblems(filters *dto.CFProblemsFilterRequest) (*dto.CFProblemsResponse, error) {
+	page := filters.Page
+	if page < 1 {
+		page = 1
+	}
+	limit := filters.Limit
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+
+	cfFilter := scrapper.CFProblemsFilter{
+		Tags:      filters.Tags,
+		MinRating: filters.MinRating,
+		MaxRating: filters.MaxRating,
+		Search:    filters.Search,
+		Page:      page,
+		Limit:     limit,
+	}
+
+	problems, total, err := scrapper.FilterCodeforcesProblems(cfFilter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch Codeforces problems: %w", err)
+	}
+
+	cfProblems := make([]dto.CFProblem, len(problems))
+	for i, p := range problems {
+		cfProblems[i] = dto.CFProblem{
+			ContestID:   p.ContestID,
+			Index:       p.Index,
+			Name:        p.Name,
+			Type:        p.Type,
+			Rating:      p.Rating,
+			Tags:        p.Tags,
+			SolvedCount: p.SolvedCount,
+			ProblemURL:  fmt.Sprintf("https://codeforces.com/problemset/problem/%d/%s", p.ContestID, p.Index),
+		}
+	}
+
+	return &dto.CFProblemsResponse{
+		Problems: cfProblems,
+		Total:    total,
+		Page:     page,
+		Limit:    limit,
+		HasMore:  page*limit < total,
+	}, nil
 }
 
 // GetUserSolvedCount returns the count of solved problems for a user
